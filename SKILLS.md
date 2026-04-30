@@ -1,6 +1,6 @@
 # SKILLS.md — FHE Enterprise Production Management Centre
 
-> Agent capability registry. Defines what each AI agent in the FHE ecosystem can and cannot do, how to invoke each, and how to route tasks to the right agent.
+> Agent capability registry. Defines what each AI agent in the FHE ecosystem can and cannot do, and how to route tasks to the right agent.
 
 ---
 
@@ -8,218 +8,204 @@
 
 ### 1. Claude Code (Claude Max)
 
-**Primary Role**: Build agent, multi-file code reviewer, PR fixer, architecture planner, documentation generator
+**Primary Role**: Build agent, code reviewer, PR fixer, architecture planner, documentation generator
 
-**Capabilities**:
-- Multi-file codebase analysis and full implementation
-- PR review with inline comments pushed directly to the PR branch
-- Fix commits pushed to existing PR branches in response to review comments
-- Generating rigorous Claude Code prompts for subsequent sessions
-- Documentation generation: CLAUDE.md, README, architecture docs, delivery plans
+**Can Do**:
+- Multi-file codebase analysis and implementation
+- PR review with inline comments pushed to PR branch
+- Fix commits pushed directly to open PR branches
+- Generating Claude Code prompts for subsequent sessions
+- Documentation generation (CLAUDE.md, README, architecture docs, MEMORY.md)
 - Test generation for existing logic
-- Zod schema creation for existing API endpoints
-- Single-file and multi-file refactoring
-- GitHub Actions workflow creation (requires human review before merge)
-- Dependency audit and remediation planning
+- Zod schema creation for existing endpoints
+- Single-file and multi-file refactoring (up to 5 files)
+- GitHub Actions workflow creation (with human review gate)
+- Dependency audit and vulnerability analysis
 
-**Invocation Methods**:
-- **Interactive CLI**: `claude` command in repo directory — for complex multi-file work
-- **GitHub Action — on-demand**: Comment `@claude [instruction]` on any issue or PR
-- **GitHub Action — automatic**: Triggers on PR open/synchronize via `claude-auto-review.yml`
-- **GitHub Action — issue-driven**: Assign issue to Claude or include `@claude` in issue body
+**Invocation Patterns**:
+- **Interactive CLI**: `claude` inside repo directory for complex multi-file work
+- **@claude on PR/Issue**: Comment `@claude [instruction]` — GitHub Action triggers
+- **Automatic PR Review**: `.github/workflows/claude-auto-review.yml` on PR open/sync
+- **Issue → PR**: Assign issue to Claude or comment `@claude implement this`
 
-**Files Claude Code Reads Every Session**:
-- `CLAUDE.md` — build conventions and session protocols
-- `MEMORY.md` — prior session context
-- `docs/DELIVERY_PLAN.md` — current phase and priorities
-
-**Hard Limits — Stop and Add `requires-human-review` Label**:
-- Schema migrations
-- Auth/RBAC/session middleware
-- Secret or credential configuration
-- Changes touching more than 5 files
+**Hard Limits — Requires Human Review**:
+- Schema migrations (Prisma schema changes)
+- Auth/RBAC/session middleware changes
+- Secret configuration or credential handling
+- Multi-repo coordinated changes
 - Production deployments
-- Any change with unclear security implications
+- Any change touching >5 files
+- Any GDPR/PII-adjacent logic
 
-**Cost Notes**:
+**Cost Control**:
 - Uses `ANTHROPIC_API_KEY` from repo secrets
-- Scope `claude-auto-review.yml` to `src/**` and `prisma/**` paths only to control cost
-- Add `if: github.actor != 'dependabot[bot]'` guard to skip dependency update PRs
+- Scope auto-review to `src/**` and `prisma/**` paths only
+- Add `if: github.actor != 'dependabot[bot]'` guard to skip dep PRs
+- Monitor token usage via Anthropic console
 
 ---
 
-### 2. Cursor Pro+ Background Agents — Universal FHE-Agent Pattern
+### 2. Cursor Pro+ Background Agents (Universal FHE-Agent Pattern)
 
-**Primary Role**: Scoped, fast implementation tasks — JSDoc, lint fixes, Zod schemas, test coverage, single-file refactors
+**Primary Role**: Scoped, fast implementation tasks — JSDoc, lint fixes, Zod schemas, single-file tests, minor refactors
 
-**Capabilities**:
-- JSDoc comments on all exported functions in a file
-- Zod validation schemas for existing endpoints
-- Unit tests for existing logic
+**Can Do**:
+- JSDoc on exported functions
+- Zod schemas for existing endpoints
+- Tests for existing logic
 - Single-file refactors and renames
-- Lint and TypeScript error fixes
-- Webhook handlers following an existing established pattern
-- HESA field backfills on existing data models
-- README and inline documentation updates
+- Lint and typecheck fixes
+- Webhook handlers following existing patterns
+- HESA field backfills (SJMS-2.5 only)
+- README and docs updates
+- Comment-driven Q&A (`@cursor explain` / `q:`) — read-only, no branch
 
-**Invocation Methods**:
-1. **Issue template** (primary — use 90% of the time):
-   - Go to `github.com/RJK134/[REPO]/issues/new/choose`
-   - Click "Cursor Agent Task"
-   - Fill in: Action / Scope / Acceptance Criteria / Out of Scope / Persona pre-check
-   - Submit → `cursor` label auto-applied → agent dispatches within 30 seconds
-   - PR appears 5–15 minutes later on branch `cursor/issue-N`
-2. **Comment-driven Q&A** (read-only, no PR created):
-   - Comment `@cursor explain [question]` on any issue or PR
-   - Comment `q: [question]` on any issue or PR
-   - Agent posts markdown answer back — no branch created
-3. **Manual workflow dispatch** (no issue required):
-   - Go to `Actions → cursor-agent-manual.yml → Run workflow`
-   - Fill in: prompt / branch_prefix / model
-   - PR appears 5–15 minutes later on branch `cursor/manual-N`
+**Invocation Patterns**:
+- **Issue Template**: `Cursor Agent Task` form → `cursor` label → auto-dispatch
+- **Comment**: `@cursor explain ...` / `q: ...` / `explain: ...` on any issue or PR
+- **Manual Dispatch**: Actions → `cursor-agent-manual.yml` → Run workflow → fill prompt
 
-**Guard Rails — Agent Adds `requires-human-review` and Stops If It Detects**:
-- Any change to `prisma/schema.prisma` (schema migrations)
-- Auth, RBAC, or session middleware changes
-- Anything in payments, finance, marks retention, or grade data
-- New external integrations (Moodle, Azure AD, OAuth providers, Stripe setup)
-- CI/CD workflow or release configuration changes
+**Hard Limits — Adds `requires-human-review` Label and Stops**:
+- Prisma schema migrations
+- Auth/RBAC/session middleware
+- Payments, finance, marks retention
+- New external integrations
+- CI/CD workflow configuration
 - Real PII or production credentials
 
-**Cost Control**:
-- ~$0.30 average per task
-- Set $25/month hard cap: https://cursor.com/settings/billing
-- Monitor live at: `https://cursor.com/agents/[agent-id]` (link posted in issue comment)
-
 **Output**:
-- Branch: `cursor/issue-N` (label-triggered) or `cursor/manual-N` (dispatch-triggered)
-- PR opened automatically with self-review checklist
-- Comment posted on source issue with tracking link
+- Branch: `cursor/issue-N` (label-triggered) or `cursor/manual-N` (dispatch)
+- PR with self-review checklist filled in
+- Comment on triggering issue with tracking link + cursor.com agent URL
+
+**Cost Control**:
+- ~$0.30/task average
+- Hard cap: $25/month at https://cursor.com/settings/billing
+- Monitor live: https://cursor.com/agents/[agent-id]
 
 ---
 
 ### 3. Cursor BugBot
 
-**Primary Role**: Automated PR code review — bug detection, logic errors, security issues
+**Primary Role**: Automated PR bug detection and inline review comments
 
-**Capabilities**:
-- Inline PR review comments with severity classification (Low / Medium / High)
-- Detects: bugs, logic errors, security vulnerabilities, type errors, placeholder text
-- "Fix in Cursor" button — opens PR locally in Cursor IDE with context
-- "Fix in Web" button — cloud-based fix
+**Can Do**:
+- Inline PR comments flagging bugs, logic errors, security issues
+- Severity classification: Low / Medium / High
+- "Fix in Cursor" button (opens PR locally with context)
+- "Fix in Web" button (cloud-based fix)
 
-**Configuration**: Cursor settings → Integrations → GitHub → Enable BugBot per repo
+**Cannot Do**:
+- Merge PRs
+- Push fix commits autonomously
+- Replace human review for auth/PII/schema changes
 
-**Post-Fix Process**:
-1. Push fix commit to the PR branch
-2. Verify `OWNER/REPO` and similar placeholders are resolved
-3. Click "Resolve conversation" on the BugBot comment thread
-4. Wait for checks to re-run on the new commit
-5. Proceed to human review and merge
-
-**Limits**:
-- Advisory only — cannot merge, cannot write code autonomously
-- Does not replace human review for auth, PII, schema, or financial code
-- Comment threads must be manually resolved after fixes are pushed
+**Configuration**: Cursor Settings → BugBot → Enable on specific repos  
+**Post-fix**: Click "Resolve conversation" after fix commit is pushed
 
 ---
 
 ### 4. GitHub Copilot
 
-**Primary Role**: IDE-level code completion and inline PR review suggestions
+**Primary Role**: IDE-level code completion and PR review suggestions
 
-**Capabilities**:
-- Real-time inline code suggestions in Cursor/VS Code
-- PR review comments via GitHub Copilot code review feature
-- GitHub Copilot Chat for codebase Q&A
+**Can Do**:
+- Inline code completion suggestions
+- PR review comments (Copilot code review feature)
+- Copilot Chat for repo Q&A
+- Explain code, suggest tests, draft documentation
 
-**Limits**:
-- Suggestions only — all accepted changes require developer review
-- No autonomous branch creation or PR opening
-- Quality lower than Claude Code for complex architectural changes
+**Cannot Do**:
+- Create branches or PRs autonomously
+- Merge anything
+- All suggestions require explicit developer acceptance
 
 ---
 
 ### 5. Dependabot
 
-**Primary Role**: Automated dependency vulnerability detection and version update PRs
+**Primary Role**: Automated dependency vulnerability and version update PRs
 
-**Capabilities**:
-- Security vulnerability PRs — flag and fix known CVEs in dependencies
-- Version update PRs — keep dependencies current
-- Configurable via `.github/dependabot.yml` per repo
+**Can Do**:
+- Security vulnerability PRs (treat as P0 — review within 48h)
+- Dependency version update PRs (review weekly in batch)
+- Ecosystem support: npm, GitHub Actions, Docker
 
 **Policy**:
-- **Security PRs**: review and merge within 48 hours — treat as P0
-- **Version update PRs**: review and merge in weekly batch
-- Never auto-merge — always requires CI pass + human review
-- Add `if: github.actor != 'dependabot[bot]'` to Claude auto-review workflow to avoid unnecessary AI review of dep updates
+- Security PRs: review and merge within 48 hours if CI passes
+- Version PRs: review in weekly batch, never auto-merge without CI
+- Always check breaking changes before merging major version bumps
 
 ---
 
-## Skill Routing Decision Tree
+## Task Routing Decision Tree
 
 ```
-New task arrives
+Task received
 │
-├── Security / auth / schema / PII change?
-│   └── YES → Claude Code interactive session + mandatory human review gate
+├── Is it a security/auth/schema/PII change?
+│   └── YES → Claude Code interactive session + human review gate
 │
-├── Multi-file architectural change or complex implementation?
+├── Is it a multi-file architectural change (>5 files)?
 │   └── YES → Claude Code interactive session
 │
-├── Multi-file but @claude comment sufficient? (PR fix, review response)
-│   └── YES → @claude comment on the PR
+├── Is it scoped (JSDoc, lint, Zod, single-file test, minor refactor)?
+│   └── YES → Cursor Background Agent via Cursor Agent Task issue template
 │
-├── Scoped single-file task (JSDoc, lint, Zod schema, test for existing logic)?
-│   └── YES → Cursor Agent via issue template (Way 1)
+├── Is it a code explanation or PR question?
+│   └── YES → @cursor explain comment (read-only, no branch)
 │
-├── Code explanation or Q&A needed on existing PR/issue?
-│   └── YES → @cursor explain comment (Way 3, read-only)
+├── Is it a PR review comment to address?
+│   └── YES → @claude address the review comments → fix commit pushed
 │
-├── Dependency vulnerability PR open?
-│   └── YES → Review Dependabot PR → merge if CI passes
+├── Is it a dependency vulnerability?
+│   └── YES → Review and merge Dependabot PR (check CI + breaking changes)
 │
-└── BugBot found a bug in a PR?
-    └── YES → Fix in Cursor → push fix commit → resolve BugBot thread → human approve
+└── Is it a PR bug flagged by BugBot?
+    └── YES → Fix in Cursor → push fix commit → resolve conversation → human approve
 ```
 
 ---
 
 ## Universal Repo Setup Checklist
 
-For every portfolio repo to meet FHE enterprise standard, the following must be deployed:
+Every portfolio repo must have all of these deployed to reach FHE standard:
 
-### Files to Create
-- [ ] `CLAUDE.md` — repo-specific Claude Code conventions (use Claude Code Prompt from PROMPTS_LIBRARY.md)
-- [ ] `MEMORY.md` — session continuity file
-- [ ] `.github/workflows/claude.yml` — Claude Code on-demand action
-- [ ] `.github/workflows/claude-auto-review.yml` — automatic PR review on open/synchronize
-- [ ] `.github/workflows/cursor-agent.yml` — Cursor agent label/comment dispatch
-- [ ] `.github/workflows/cursor-agent-manual.yml` — manual Cursor workflow dispatch
-- [ ] `.github/workflows/ci.yml` — lint / typecheck / test / build pipeline
+### Core Identity Files
+- [ ] `CLAUDE.md` — repo-specific Claude Code conventions
+- [ ] `MEMORY.md` — session continuity file (updated each session)
+- [ ] `SKILLS.md` — (optional at repo level; defer to this central file)
+
+### GitHub Workflows
+- [ ] `.github/workflows/claude.yml` — Claude Code on-demand (@claude trigger)
+- [ ] `.github/workflows/claude-auto-review.yml` — automatic PR review on open/sync
+- [ ] `.github/workflows/cursor-agent.yml` — Cursor agent dispatch (cursor label + comments)
+- [ ] `.github/workflows/cursor-agent-manual.yml` — manual workflow_dispatch
+- [ ] `.github/workflows/ci.yml` — lint + typecheck + test + build gates
+- [ ] `.github/dependabot.yml` — npm + GitHub Actions ecosystems
+
+### Issue & PR Templates
 - [ ] `.github/ISSUE_TEMPLATE/config.yml` — template chooser (blank issues disabled)
-- [ ] `.github/ISSUE_TEMPLATE/cursor-agent-task.yml` — Cursor task form
+- [ ] `.github/ISSUE_TEMPLATE/cursor-agent-task.yml` — Cursor Agent Task form
 - [ ] `.github/ISSUE_TEMPLATE/bug-report.yml` — structured bug report
 - [ ] `.github/ISSUE_TEMPLATE/feature-request.yml` — feature request form
+- [ ] `.github/ISSUE_TEMPLATE/epic.yml` — epic planning form
 - [ ] `.github/pull_request_template.md` — PR checklist
-- [ ] `.github/dependabot.yml` — npm + GitHub Actions security scanning
+
+### Cursor Agent Config
 - [ ] `.cursor/agents/FHE-Agent.md` — universal agent persona
 - [ ] `.cursor/rules/fhe-conventions.mdc` — always-on coding rules
+- [ ] `.cursor/environment.json` — build environment for background agents
 
-### GitHub Settings to Enable
-- [ ] Branch protection on `main`: require PR + 1 review + CI pass + no bypass
-- [ ] Allow auto-merge: ON
-- [ ] Automatically delete head branches: ON
+### GitHub Settings (Manual)
+- [ ] Branch protection on `main`: require PR, 1 review, CI pass, up-to-date
+- [ ] Dependabot: security alerts + version updates enabled
+- [ ] CodeQL scanning: enabled
 - [ ] GitHub Environments: `development`, `staging`, `production`
-- [ ] `production` environment protection: require owner approval before deploy
+- [ ] `production` environment: manual approval required
+- [ ] Auto-merge: enabled
+- [ ] Auto-delete head branches: enabled
 
-### Secrets to Add
-- [ ] `ANTHROPIC_API_KEY` — Settings → Secrets and variables → Actions
-- [ ] `CURSOR_API_KEY` — Settings → Secrets and variables → Actions
-
-### Apps to Install
-- [ ] Claude GitHub App (via `/install-github-app` in Claude Code CLI)
-- [ ] Cursor GitHub App (via cursor.com/settings/integrations)
-- [ ] Dependabot enabled (security + version updates)
-- [ ] CodeQL scanning enabled (Security → Code scanning → Set up CodeQL)
+### Secrets (Manual)
+- [ ] `ANTHROPIC_API_KEY` — Settings → Secrets → Actions
+- [ ] `CURSOR_API_KEY` — Settings → Secrets → Actions
