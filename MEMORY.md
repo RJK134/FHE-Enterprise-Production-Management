@@ -1,91 +1,84 @@
 # MEMORY.md — FHE Enterprise Production Management Centre
 
-> This file maintains continuity across Claude Code sessions.
-> **Update this file at the end of every session** with what was done, what was decided, and what comes next.
+> This file maintains continuity across all Claude Code sessions. Read it at the start of every session. Update it at the end of every session.
 
 ---
 
-## Current State
+## Active Context
 
 **Last Updated**: 2026-05-01
 **Current Phase**: Phase 0 — Foundation Build
-**Active Focus**: Establishing FHE-EPMC repo structure, core docs, agent configs, GitHub workflows
-**Owner**: Freddie Finn (RJK134 / Future Horizons Education)
+**Active Sprint**: Establishing FHE-EPMC repo structure, core docs, agent configs, GitHub workflows
+**Owner**: Freddie Finn (RJK134)
+**Primary Repo**: https://github.com/RJK134/FHE-Enterprise-Production-Management
 
 ---
 
-## Product Background
+## System Context — What FHE-EPMC Is
 
-### Origin Story
-The FHE-EPMC evolved from the **Perplexity Computer Production Delivery Command Centre**, which reached 62/100 enterprise readiness after extensive development (~13,000+ Perplexity credits). A formal UAT review on 29/04/2026 concluded the product is an "executable specification rather than a live orchestrator" — most value-creating capabilities (PR control tower, review-resolution bot, evidence/memory lake, Claude bridge, plan refresh engine, UAT portal) were flagged partial or missing.
+FHE-EPMC is the master orchestration layer for all Future Horizons Education product development. It was created to replace and supersede a Perplexity Computer-hosted Production Delivery Command Centre that reached ~62/100 enterprise readiness but could not be developed further due to:
 
-**Decision**: Rebuild as a GitHub-native system with real API integrations rather than a hosted iframe application simulating state.
+- No live GitHub API connectors (all state was simulated)
+- Cannot read Windows local paths (Claude history inaccessible from hosted app)
+- UI state-management defects (dropdown/detail-pane sync failure)
+- No RBAC, no audit log, no SSO
+- PR control tower missing entirely
+- Plan refresh engine missing
+- ~13,000+ Perplexity credits spent on scaffold/spec rather than live system
 
-### What to Carry Forward from the Perplexity Build
-- 14-step lifecycle model ✓
-- Governance-first, human-gated pattern ✓
-- Capacity handoff pack structure ✓
-- Evidence/memory model design ✓
-- Human gates enumeration ✓
-- Claude prompt execution policy pattern ✓
-- P0/P1/P2 blocker decomposition approach ✓
-- Tranche A→D delivery structure for SJMS-2.5 ✓
+The decision was made on 2026-04-30 to rebuild as a GitHub-native tool with real integrations.
 
 ---
 
-## Portfolio Snapshot
+## Portfolio Product Snapshot
 
-| Product | Repo | Readiness | P0 Blockers |
-|---------|------|-----------|-------------|
-| SJMS 2.5 | RJK134/SJMS-2.5 | 72/100 | Branch protection gaps, plaintext webhook/session secrets, no transactional outbox/DLQ, static JWT fallback |
-| EquiSmile | RJK134/EquiSmile | 63/100 | Multi-tenancy, identity/SSO gaps, CI/DB gaps, dependency hardening |
-| HERM Platform | RJK134/herm-platform | 70/100 | SSO/MFA, revocable sessions, Stripe webhook completeness, observability |
-| FHE-EPMC | RJK134/FHE-Enterprise-Production-Management | Building | Foundation files being established |
+| Product | Repo | Readiness Score | Current Phase | Top P0 Blocker |
+|---------|------|-----------------|---------------|----------------|
+| SJMS 2.5 | RJK134/SJMS-2.5 | 72/100 | Tranche A | Plaintext webhook/session secrets |
+| EquiSmile | RJK134/EquiSmile | 63/100 | Phase 17 Stabilise | Identity/multi-tenancy gaps |
+| HERM Platform | RJK134/herm-platform | 70/100 | Phase 1 Hardening | SSO/MFA, revocable sessions |
+| FHE-EPMC | RJK134/FHE-Enterprise-Production-Management | Building | Phase 0 Foundation | All foundational files being established |
+
+---
+
+## SJMS-Agent Pattern (Universal — Deploy to All Repos)
+
+The SJMS-2.5 Cursor Agent is the proven implementation pattern:
+- Lives in `.github/workflows/cursor-agent.yml` and `cursor-agent-manual.yml`
+- Triggered by: `cursor` label on issues, `@cursor`/`q:`/`explain:` comments, manual workflow dispatch
+- Writes to branch `cursor/issue-N`, opens PR, posts tracking comment with cursor.com link
+- Persona defined in `.cursor/agents/SJMS-Agent.md` (to be universalised as `FHE-Agent.md`)
+- Guard rails: refuses schema migrations, auth changes, PII handling, CI/CD config changes
+- Cost: ~$0.30 per task; set $25/month cap at https://cursor.com/settings/billing
+- Output: PR + issue comment with tracking link + cursor.com agent page for live monitoring
 
 ---
 
 ## Session Log
 
-### 2026-05-01 — Foundation Session (Session 1)
-**Objective**: Push all foundational files to establish FHE-EPMC repo as source of truth
-**Actions**:
-- Pushed README.md (comprehensive product overview, lifecycle, tool stack)
-- Pushed CLAUDE.md (Claude Code conventions, production gate, session protocols, guard rails)
-- Pushed MEMORY.md (this file — session continuity)
-- Pushed SKILLS.md (agent capability registry, routing decision tree, universal setup checklist)
-- Pushed docs/ (PRODUCT_SPECIFICATION.md, DELIVERY_PLAN.md, ARCHITECTURE.md, INTEGRATION_MAP.md, PROMPTS_LIBRARY.md, checklists)
-- Pushed .github/ (workflows: claude.yml, claude-auto-review.yml, cursor-agent.yml, cursor-agent-manual.yml, ci.yml, dependabot.yml; issue templates; PR template)
-- Pushed .cursor/ (FHE-Agent.md persona, fhe-conventions.mdc rules, environment.json)
-- Pushed scripts/ (setup-repo-standards.sh, deploy-cursor-agent.sh, setup-review-intelligence.sh)
-
-**PRs Opened**: None (direct push to main for foundation)
-
-**Next Steps** (Priority Order):
-1. Add `ANTHROPIC_API_KEY` secret to repo: Settings → Secrets → Actions
-2. Add `CURSOR_API_KEY` secret to repo: Settings → Secrets → Actions
-3. Run `/install-github-app` in Claude Code CLI inside this repo
-4. Enable branch protection on `main` (require PR, 1 review, CI pass)
-5. Create GitHub Environments: `development`, `staging`, `production`
-6. Run `./scripts/deploy-cursor-agent.sh --repo RJK134/EquiSmile`
-7. Run `./scripts/deploy-cursor-agent.sh --repo RJK134/herm-platform`
-8. Open Claude Code session: use Prompt 1 from PROMPTS_LIBRARY.md (Tranche A SJMS-2.5 hardening)
-9. Start Phase 1 dashboard build (see docs/DELIVERY_PLAN.md Phase 1)
-10. Resolve FutureHorizonsEducation org access
+### 2026-05-01 — Batch Foundation Push (Perplexity AI assisted)
+- **Objective**: Establish FHE-EPMC repo foundational files via Perplexity MCP tool
+- **Batch 1 Pushed**: README.md (comprehensive), CLAUDE.md, MEMORY.md (this file), SKILLS.md
+- **Batch 2 Pending**: docs/ folder (PRODUCT_SPECIFICATION.md, DELIVERY_PLAN.md, ARCHITECTURE.md, INTEGRATION_MAP.md, PROMPTS_LIBRARY.md, checklists/)
+- **Batch 3 Pending**: .github/ (workflows, issue templates, PR templates, dependabot.yml), .cursor/ (agents, rules), scripts/
+- **PRs Opened**: None — direct push to main for foundation files
+- **Next Steps**: Complete Batch 2 and 3 pushes, then proceed to Phase 0 manual setup items
 
 ---
 
-## Known Blockers Requiring Manual Resolution
+## Known Blockers — Requiring Manual Human Action
 
-| Blocker | Impact | Resolution Path | Status |
-|---------|--------|-----------------|--------|
-| `ANTHROPIC_API_KEY` not set | Claude Code GitHub Action won't run | Add to repo secrets | ⏳ Open |
-| `CURSOR_API_KEY` not set | Cursor agent won't dispatch | Add to repo secrets | ⏳ Open |
-| Claude GitHub App not installed | @claude mentions won't work | Run `/install-github-app` in Claude Code CLI | ⏳ Open |
-| Cursor GitHub App not on all repos | BugBot won't review PRs | Install via cursor.com/settings/integrations | ⏳ Open |
-| Branch protection not enabled | Agents can push directly to main | Settings → Branches → Add rule for `main` | ⏳ Open |
-| FutureHorizonsEducation org access | Cannot scan FHE org repos | Correct org permissions | ⏳ Open |
-| Local Windows Claude history path | Cannot read `C:\Users\...` from hosted app | Export bundles and upload to evidence store | ⏳ Open |
-| PR #149 SJMS-2.5 | BugBot conversation unresolved, needs 1 approving review | Resolve conversation + approve or bypass rule | ⏳ Open |
+| # | Blocker | Impact | Resolution Path | Status |
+|---|---------|--------|-----------------|--------|
+| 1 | `ANTHROPIC_API_KEY` secret not set | Claude Code GitHub Action won't trigger | Settings → Secrets → Actions → New secret | ⬜ Open |
+| 2 | `CURSOR_API_KEY` secret not set | Cursor agent workflow won't dispatch | Settings → Secrets → Actions → New secret | ⬜ Open |
+| 3 | Claude GitHub App not installed | `@claude` comments and auto-review won't fire | Run `/install-github-app` in Claude Code CLI session | ⬜ Open |
+| 4 | Cursor GitHub App not installed | BugBot won't review PRs | cursor.com/settings/integrations | ⬜ Open |
+| 5 | Branch protection not enabled on main | Agents can push directly to main | Settings → Branches → Add rule for main | ⬜ Open |
+| 6 | GitHub Environments not created | No dev/staging/production isolation | Settings → Environments → New environment (×3) | ⬜ Open |
+| 7 | FutureHorizonsEducation org access | Cannot scan FHE org repos in portfolio | Correct org permissions, add as portfolio account | ⬜ Open |
+| 8 | Windows Claude history path inaccessible | Evidence lake cannot ingest local history | Export Claude history bundles manually and upload | ⬜ Open |
+| 9 | SJMS-2.5 PR #149 — review required | PR blocked from merging | Resolve BugBot conversation + get 1 approving review | ⬜ Open |
 
 ---
 
@@ -93,29 +86,45 @@ The FHE-EPMC evolved from the **Perplexity Computer Production Delivery Command 
 
 | Date | Decision | Rationale |
 |------|----------|----------|
-| 2026-04-30 | Abandon Perplexity Computer as primary tool | Product is scaffold only after 13k+ credits; no live connectors; UI defects; cannot read local Windows paths |
-| 2026-04-30 | FHE-EPMC to be GitHub-native | Real PR control tower requires live GitHub API access, not simulated state |
-| 2026-04-30 | Universal Cursor Agent pattern from SJMS-2.5 | Proven pattern, ~$0.30/task, integrates with existing GitHub workflow |
-| 2026-04-30 | Human gate on all merges, releases, deploys | Non-negotiable for enterprise — GDPR, data integrity, security posture |
-| 2026-05-01 | Single repo as source of truth for all FHE standards | CLAUDE.md, MEMORY.md, SKILLS.md, workflow templates sourced from this repo |
+| 2026-04-30 | Abandon Perplexity Computer as FHE-EPMC build platform | Scaffold-only after 13k+ credits; no live connectors; UI defects; cannot read local Windows paths |
+| 2026-04-30 | FHE-EPMC to be GitHub-native, not an iframe app | Real PR control tower requires live GitHub API, not simulated state |
+| 2026-04-30 | Universal Cursor Agent pattern from SJMS-2.5 | Proven pattern; $0.30/task cost; integrates with existing GitHub workflow; human-gated |
+| 2026-04-30 | Human gate on all merges, releases, schema changes | Non-negotiable for enterprise: GDPR, data integrity, security posture |
+| 2026-05-01 | Dashboard built as Next.js app calling real GitHub API | Eliminates simulated/static state that was the core flaw of v1 |
 
 ---
 
-## Cost Controls
+## Strengths to Carry Forward from Perplexity v1
 
-| Resource | Limit | Where to Set |
-|----------|-------|-------------|
-| Cursor Background Agents | $25/month cap | https://cursor.com/settings/billing |
-| Claude Code API (ANTHROPIC_API_KEY) | Monitor usage | https://console.anthropic.com/usage |
-| GitHub Actions minutes | Monitor in org settings | GitHub → Settings → Billing |
+These design elements from the Perplexity build were strong and must be preserved:
+- 14-step delivery lifecycle model
+- Governance-first, human-gated-merge operating model
+- Capacity handoff pack structure (repo/branch/PR/SHA + objective/acceptance criteria + continuation rules)
+- Evidence/memory model design (per-repo evidence records with provenance)
+- Claude prompt execution policy pattern (scoped branch → inspect → smallest change → gates → PR → no merge)
+- Enterprise readiness scoring decomposed into specific primary blockers
+- Tranche A→D / Phase-structured roadmaps per product
 
 ---
 
-## Evidence References
+## Claude Code Prompt — Phase 0 First Session
 
-| Document | Key Finding | Relevance |
-|----------|-------------|----------|
-| Production-Delivery-Command-Centre-UAT-Review290426.MD | 62/100 readiness, 16 capability gaps, 7 security concerns | Defines what FHE-EPMC must build |
-| SJMS-2.5-Agent-Explanation.txt | Cursor agent pattern — 4 invocation methods, costs, guard rails | Universal agent blueprint |
-| Enterprise-Build-System-Full-History.docx | Full history of build attempts, repo assessments, Claude Code prompts | Context for all prior decisions |
-| cursor-agent-manual.yml | Working Cursor manual dispatch workflow | Direct source for workflow template |
+When opening the first Claude Code interactive session in this repo, use this prompt:
+
+```
+You are working in the FHE Enterprise Production Management Centre repo.
+Read CLAUDE.md and MEMORY.md in full before proceeding.
+
+Objective: Wire the Claude Code GitHub Action and set up CI pipeline.
+
+1. Create .github/workflows/claude.yml for on-demand @claude mentions on issues/PRs.
+2. Create .github/workflows/claude-auto-review.yml for automatic PR review on open/synchronize events.
+3. Create .github/workflows/ci.yml with: npm run lint, npm run typecheck, npm test, npm run build.
+4. Scope auto-review to src/** and prisma/** paths only.
+5. Add if: github.actor != 'dependabot[bot]' guard to auto-review workflow.
+6. Open a PR — do NOT merge.
+7. Production gate: all CI checks must pass, no secrets in any file, PR description includes rollback plan.
+8. Update MEMORY.md with this session's changes.
+
+Stop conditions: Any auth change, schema change, or change touching >5 files — add requires-human-review label and stop immediately.
+```
