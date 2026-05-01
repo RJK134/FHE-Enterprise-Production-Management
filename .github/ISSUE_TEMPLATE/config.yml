@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: FHE-EPMC documentation
+    url: https://github.com/RJK134/FHE-Enterprise-Production-Management/tree/main/docs
+    about: Read the product specification, delivery plan, and process docs before opening an issue.
+  - name: Security disclosure
+    url: https://github.com/RJK134/FHE-Enterprise-Production-Management/security
+    about: Report a security vulnerability privately. Do NOT open a public issue for security disclosures.

@@ -1,0 +1,76 @@
+name: repo intelligence scan
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"  # Mondays 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: "Target repo (owner/name). Leave blank to scan this repo."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  security-events: read
+
+concurrency:
+  group: repo-intel-${{ github.event.inputs.target_repo || github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: foundation + governance scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: emit scan banner
+        run: |
+          echo "FHE-EPMC repo intelligence scan"
+          echo "  target: ${{ github.event.inputs.target_repo || github.repository }}"
+          echo "  run: ${{ github.run_id }}"
+
+      - name: run foundation verifier
+        run: bash scripts/verify-foundation.sh
+
+      - name: emit governance signals
+        run: |
+          mkdir -p .scan-output
+          {
+            echo "# Repo Intelligence Scan"
+            echo
+            echo "- target: ${{ github.event.inputs.target_repo || github.repository }}"
+            echo "- run id: ${{ github.run_id }}"
+            echo "- run url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "- triggered by: ${{ github.event_name }} (${{ github.actor }})"
+            echo
+            echo "## Foundation files"
+            for f in README.md CLAUDE.md MEMORY.md SKILLS.md \
+                     docs/PRODUCT_SPECIFICATION.md docs/DELIVERY_PLAN.md \
+                     docs/ARCHITECTURE.md docs/INTEGRATION_MAP.md docs/PROMPTS_LIBRARY.md \
+                     .github/pull_request_template.md \
+                     .github/ISSUE_TEMPLATE/config.yml \
+                     .github/workflows/ci.yml \
+                     .cursor/agents/FHE-Agent.md ; do
+              if [ -f "$f" ]; then
+                echo "- [x] $f"
+              else
+                echo "- [ ] $f (missing)"
+              fi
+            done
+            echo
+            echo "## Phase 0 note"
+            echo
+            echo "This scan currently emits a foundation-files signal only. Phase 1 wires"
+            echo "the live readiness score and CodeQL/Dependabot/branch-protection signals."
+          } > .scan-output/scan-${{ github.run_id }}.md
+
+      - name: upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-intelligence-scan-${{ github.run_id }}
+          path: .scan-output/
+          retention-days: 90

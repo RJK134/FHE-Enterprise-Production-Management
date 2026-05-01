@@ -1,0 +1,58 @@
+name: Cursor Agent Task
+description: Scoped task to dispatch to the Cursor Background Agent (FHE-Agent persona).
+title: "agent: <short-task-title>"
+labels: ["cursor", "agent-task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template only for scoped, low-risk tasks suitable for the Cursor Background Agent.
+        The agent will refuse and label `requires-human-review` if any of the following apply:
+        schema migrations · auth/RBAC/session middleware · payments/finance/marks retention · new external integrations · CI/CD configuration · real PII or production credentials.
+
+  - type: textarea
+    id: task
+    attributes:
+      label: Task summary
+      description: One sentence describing what the agent should do.
+      placeholder: "Add Zod schema for the GET /api/health endpoint."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope (file glob or list)
+      placeholder: |
+        - src/app/api/health/route.ts
+        - src/lib/schemas/health.ts
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Zod schema exists and is imported in the route handler
+        - [ ] Tests added covering valid and invalid bodies
+        - [ ] `npm run lint && npm run typecheck && npm test && npm run build` pass
+    validations:
+      required: true
+
+  - type: dropdown
+    id: refusal-self-check
+    attributes:
+      label: Refusal self-check
+      description: Confirm this task does NOT touch any of the refusal categories above.
+      options:
+        - "Confirmed — task is in the agent's allowed scope"
+        - "Unsure — please review before dispatching"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes for the agent
+      description: Any additional context, links to existing patterns, or constraints.

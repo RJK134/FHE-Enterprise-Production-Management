@@ -1,0 +1,46 @@
+name: claude auto review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: automatic PR review
+    if: |
+      github.event.pull_request.draft == false &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: guardrails
+        run: |
+          echo "FHE-EPMC governance guardrails (claude auto review)"
+          echo "  - Claude reviews; it does NOT approve or merge."
+          echo "  - Claude does NOT push fix commits unless authorised by an @claude comment."
+          echo "  - Claude posts inline review comments only."
+
+      - name: claude code review
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          mode: review
+          allowed_tools: "Read,Bash(git:*)"
+          max_turns: 6
+          claude_args: |
+            --append-system-prompt "You are running automatic PR review for FHE-EPMC. Read CLAUDE.md and docs/checklists/pr-review-checklist.md. Post inline comments only. NEVER approve. NEVER request changes that block on opinion. Flag concrete issues only. NEVER push fix commits unless an @claude comment authorises it."

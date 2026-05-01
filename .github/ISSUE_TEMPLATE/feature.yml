@@ -1,0 +1,58 @@
+name: Feature
+description: A single, scoped feature or enhancement.
+title: "feat: <short-title>"
+labels: ["feature", "needs-triage"]
+body:
+  - type: input
+    id: linked-epic
+    attributes:
+      label: Linked epic / phase
+      description: Reference the parent epic or delivery phase if applicable.
+      placeholder: "#<epic-number> or 'Phase 1'"
+
+  - type: textarea
+    id: user-value
+    attributes:
+      label: User value
+      description: Who benefits from this feature and how?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete, testable conditions for done.
+      placeholder: |
+        - [ ] When ..., the system ...
+        - [ ] When ..., the system ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: File scope (proposed)
+      description: Which files do you expect to touch? Keep it ≤ 5 unless justified.
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: Things this feature deliberately does NOT do.
+
+  - type: dropdown
+    id: requires-human-review
+    attributes:
+      label: Touches a human-gated domain?
+      options:
+        - "No"
+        - "Yes — apply requires-human-review label"
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence references
+      description: Linked blockers, scan findings, UAT, or ledger entries that justify this feature.

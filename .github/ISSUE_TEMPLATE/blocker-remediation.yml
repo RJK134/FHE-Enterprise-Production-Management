@@ -1,0 +1,73 @@
+name: Blocker Remediation
+description: Tracking issue for remediating a portfolio blocker.
+title: "block: <repo>/<blocker-id> — <short-title>"
+labels: ["blocker", "needs-triage"]
+body:
+  - type: input
+    id: blocker-id
+    attributes:
+      label: Blocker ID
+      description: Use the canonical blocker ID from DELIVERY_PLAN.md (e.g. EPMC-B1, SJMS-A3).
+    validations:
+      required: true
+
+  - type: input
+    id: target-repo
+    attributes:
+      label: Target repo
+      placeholder: "RJK134/SJMS-2.5"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "P0 — must remediate this phase"
+        - "P1 — should remediate this phase"
+        - "P2 — nice to have"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Blocker description
+      description: What is the actual problem and where is it observed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence (scan, logs, audit findings)
+      description: Do NOT paste real PII or secrets.
+    validations:
+      required: true
+
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Proposed remediation
+      description: Smallest coherent production-grade change that resolves the blocker.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback plan
+      description: If the remediation goes wrong, how do we revert?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: requires-human-review
+    attributes:
+      label: Requires human review (auth/schema/secrets/CI-CD/external/payments/PII)?
+      options:
+        - "No"
+        - "Yes — apply requires-human-review label and pause agent dispatch"
+    validations:
+      required: true

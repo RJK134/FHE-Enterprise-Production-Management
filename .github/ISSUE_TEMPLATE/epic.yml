@@ -1,0 +1,77 @@
+name: Epic
+description: Multi-issue body of work spanning a phase or milestone.
+title: "epic: <short-title>"
+labels: ["epic", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template only for cross-cutting work that produces multiple child issues. For a single change, use **Feature** or **Bug / Regression**.
+
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      description: Which delivery phase does this epic belong to? (e.g. Phase 1 — Live Control Tower MVP)
+      placeholder: "Phase 1 — Live Control Tower MVP"
+    validations:
+      required: true
+
+  - type: input
+    id: target-product
+    attributes:
+      label: Target product
+      description: Which managed product does this epic primarily affect?
+      placeholder: "FHE-EPMC | SJMS-2.5 | EquiSmile | HERM Platform"
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What does success look like at the end of this epic?
+    validations:
+      required: true
+
+  - type: textarea
+    id: child-issues
+    attributes:
+      label: Child issues (proposed)
+      description: List the proposed child issues as a checklist. Add `- [ ] ` per child.
+      placeholder: |
+        - [ ] sub-issue title 1
+        - [ ] sub-issue title 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence references
+      description: Link the scan reports, blockers, ledger entries, or UAT records that justify this epic.
+
+  - type: textarea
+    id: exit-criteria
+    attributes:
+      label: Exit criteria
+      description: Concrete, testable conditions that close this epic.
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks & rollback considerations
+      description: What could go wrong; how do we recover.
+
+  - type: dropdown
+    id: requires-human-review
+    attributes:
+      label: Touches a human-gated domain?
+      description: Schema, auth/RBAC, secrets, CI/CD config, external integrations, payments, PII.
+      options:
+        - "No"
+        - "Yes — apply requires-human-review label"
+    validations:
+      required: true

@@ -1,0 +1,14 @@
+{
+  "name": "fhe-enterprise-production-management",
+  "version": "0.0.0-phase-0",
+  "private": true,
+  "description": "FHE Enterprise Production Management Centre — Phase 0 Foundation. Dashboard implementation lands in Phase 1.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "lint": "node scripts/phase-0-noop.js lint",
+    "typecheck": "node scripts/phase-0-noop.js typecheck",
+    "test": "node scripts/phase-0-noop.js test",
+    "build": "node scripts/phase-0-noop.js build",
+    "verify:foundation": "bash scripts/verify-foundation.sh"
+  }
+}
