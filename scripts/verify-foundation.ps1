@@ -57,7 +57,13 @@ $Required = @(
   "scripts/setup-review-intelligence.sh",
   "scripts/setup-review-intelligence.ps1",
   "scripts/verify-foundation.sh",
-  "scripts/verify-foundation.ps1"
+  "scripts/verify-foundation.ps1",
+  "scripts/vercel-ignore.sh",
+
+  "vercel.json",
+  ".vercelignore",
+  ".nvmrc",
+  "docs/process/vercel-integration.md"
 )
 
 $missing = 0

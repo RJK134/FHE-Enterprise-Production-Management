@@ -24,9 +24,11 @@
 
 ## Environments
 
+- [ ] Vercel **Preview** deploy succeeded on the release commit (Vercel check green).
 - [ ] Deployed to `staging` and smoke-tested.
 - [ ] UAT verdict recorded (PASS / CONDITIONAL with conditions met).
-- [ ] Production environment approval requested.
+- [ ] GitHub Environment `production` approval requested (Owner) — Vercel cannot promote without it.
+- [ ] Forked-PR releases (rare): each fork commit was explicitly authorised before the deploy ran.
 
 ## Approval
 

@@ -82,6 +82,24 @@ The SJMS-2.5 Cursor Agent pattern is the proven foundation for all repos:
   7. Run `scripts/setup-repo-standards.sh --repo RJK134/SJMS-2.5` (and EquiSmile, herm-platform) once owner approves.
   8. Resolve FutureHorizonsEducation org access for full portfolio coverage.
 
+### 2026-05-01 — Phase 0 Foundation (Vercel-for-GitHub scaffolding)
+- **Objective**: Add the Vercel for GitHub integration scaffolding so Phase 1 deploys are smooth out of the gate, without producing spurious empty deploys during Phase 0.
+- **Files added on this branch**:
+  - `vercel.json` — Next.js framework, lhr1 region, autoJobCancelation, ignoreCommand pointing at `scripts/vercel-ignore.sh`, production-only deployment for `main`.
+  - `.vercelignore` — exclude docs/, .github/, .cursor/, scripts/ and identity files from deploy uploads.
+  - `.nvmrc` — pin Vercel Node runtime to 20.
+  - `scripts/vercel-ignore.sh` — Phase-0-aware ignore step (skip until next.config.* exists; skip docs-only diffs thereafter).
+  - `docs/process/vercel-integration.md` — full Vercel runbook (one-time wiring, settings, env vars, fork protection, repository_dispatch, branch protection interaction, ledger discipline).
+- **Files updated**:
+  - `docs/INTEGRATION_MAP.md` — Vercel row enriched, env vars enumerated, branch-protection guidance, additional out-of-band step added.
+  - `docs/ARCHITECTURE.md` — §8 Deployment now references vercel.json and the ignore step.
+  - `docs/checklists/release-checklist.md` — Vercel preview gate, GitHub Environment production approval, fork authorisation.
+  - `scripts/verify-foundation.{sh,ps1}` — added the four new required files.
+- **Local verification**: `bash scripts/verify-foundation.sh` PASS · `npm run lint && npm run typecheck && npm test && npm run build` PASS.
+- **Notes**:
+  - Vercel deploys are intentionally suppressed for Phase 0 by `scripts/vercel-ignore.sh` (no `next.config.*` yet). When Phase 1 lands the Next.js app, Vercel automatically begins deploying without any further config change.
+  - The `Vercel` GitHub Check is *not* added to required status checks in Phase 0 per `docs/checklists/branch-protection-checklist.md`. Owner adds it once Phase 1 deploys are stable for two consecutive merges.
+
 ---
 
 ## Known Manual Blockers
