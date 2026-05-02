@@ -1,0 +1,32 @@
+# .vercelignore — exclude non-app artefacts from Vercel deploys.
+# Keeps the deployed bundle minimal and prevents docs/governance churn from
+# triggering heavier upload steps. Source code (src/, lib/, public/, etc.)
+# is still uploaded normally; everything below is excluded.
+
+# Governance and documentation
+docs/
+.github/
+.cursor/
+
+# Setup / verification scripts (not part of the runtime)
+scripts/
+
+# Foundation identity files
+CLAUDE.md
+MEMORY.md
+SKILLS.md
+
+# Local development artefacts
+.env*
+!.env.example
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / test caches
+coverage/
+.nyc_output/
+*.log

@@ -167,8 +167,9 @@ Eight roles per `PRODUCT_SPECIFICATION.md` §5. Permission matrix (Phase 4 imple
 ## 8. Deployment
 
 - **Dev:** local Next.js + Postgres via docker-compose.
-- **Staging:** Vercel preview deploys per PR.
-- **Production:** Vercel production environment, gated by GitHub Environment manual approval.
+- **Staging:** Vercel preview deploys per PR. Configured by `vercel.json` at the repo root with `framework: nextjs`, region `lhr1`, `github.autoJobCancelation: true`. See `docs/process/vercel-integration.md`.
+- **Production:** Vercel production environment, gated by the GitHub Environment `production` requiring Owner approval. Vercel reports deploys as a GitHub Check (`Vercel`) and writes GitHub Deployment records.
+- **Phase 0 ignore step:** `scripts/vercel-ignore.sh` skips Vercel builds until `next.config.*` exists, and skips docs-only diffs once the app is in place — preventing empty/spurious deploys and conserving build minutes.
 - **Database migrations:** Prisma migrate; never auto-applied to production; human approval required.
 
 ---

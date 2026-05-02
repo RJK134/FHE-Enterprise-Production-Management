@@ -21,7 +21,7 @@ This document enumerates every external tool FHE-EPMC integrates with, what sign
 | Anthropic API | LLM | Outbound | Direct Claude API calls (deep review, plan refresh) | Cost cap + RBAC |
 | Cursor API | Agent | Outbound | Cursor agent dispatch | Cost cap + RBAC |
 | GitHub Environments | Deploy | Read/Write | Environment protection rules, approvals | Manual approval (Owner) |
-| Vercel | Hosting | Outbound | App hosting, preview deploys | Manual production promotion |
+| Vercel | Hosting | Inbound (GitHub App) + Outbound (deploys, env vars, repository_dispatch) | App hosting, preview deploys, production promotion | Manual production promotion via GitHub Environment + Vercel |
 | Postgres | Persistence | Read/Write | Ledger, audit log, evidence index | Schema migrations gated |
 | Object Store (Phase 3) | Storage | Read/Write | Evidence Lake artefacts | n/a (read controlled by RBAC) |
 | OIDC IdP (Phase 4) | Identity | Inbound | SSO authentication | n/a |
@@ -96,6 +96,7 @@ This document enumerates every external tool FHE-EPMC integrates with, what sign
 | Postgres connection (Phase 1+) | Vercel encrypted env | Owner | Quarterly | Never committed |
 | Object store credentials (Phase 3+) | Vercel encrypted env | Owner | Quarterly | Never committed |
 | OIDC client secret (Phase 4+) | Vercel encrypted env | Owner | Yearly | Never committed |
+| Vercel deploy hook URLs (optional) | Vercel project secret | Owner | On rotation | Never committed; used only for manual triggers |
 
 No secret is ever included in any committed file. The only secrets-shaped strings allowed in this repo are placeholder names (e.g. `ANTHROPIC_API_KEY` referenced by name in workflows).
 
@@ -127,7 +128,41 @@ GitHub-side settings to be applied per repo (manual or via API where permissions
 
 ---
 
-## 7. Out-of-Band Manual Steps
+## 7. Vercel for GitHub — Specifics
+
+**Reference:** https://vercel.com/docs/git/vercel-for-github
+**Runbook:** `docs/process/vercel-integration.md`
+**Repo config:** `vercel.json`, `.vercelignore`, `.nvmrc`, `scripts/vercel-ignore.sh`
+
+### Behaviour
+
+- Every push deploys by default; pushes to non-`main` branches and PRs become **previews**, pushes to `main` become **production**.
+- A unique preview URL appears as a comment on each PR; comments are kept on for visibility.
+- `github.autoJobCancelation: true` ensures only the latest commit per branch deploys.
+- Forked-PR deploys require a maintainer "Authorize Deployment" click (Git Fork Protection — leave on).
+- Vercel reports deploys as a GitHub Check called `Vercel`; integration also writes GitHub Deployment records.
+
+### Phase 0 posture
+
+- `scripts/vercel-ignore.sh` returns 0 (skip) until `next.config.*` exists, so the foundation PR does not produce empty deploys.
+- After Phase 1 lands the Next.js app, the same script auto-flips to "proceed" for app diffs and continues to skip docs-only diffs.
+
+### System env vars Vercel exposes (consumable from the app)
+
+`VERCEL`, `VERCEL_ENV`, `VERCEL_TARGET_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_REGION`, `VERCEL_DEPLOYMENT_ID`, `VERCEL_PROJECT_ID`, `VERCEL_SKEW_PROTECTION_ENABLED`, `VERCEL_AUTOMATION_BYPASS_SECRET`, `VERCEL_OIDC_TOKEN`, `VERCEL_GIT_PROVIDER`, `VERCEL_GIT_REPO_SLUG`, `VERCEL_GIT_REPO_OWNER`, `VERCEL_GIT_REPO_ID`, `VERCEL_GIT_COMMIT_REF`, `VERCEL_GIT_COMMIT_SHA`, `VERCEL_GIT_COMMIT_MESSAGE`, `VERCEL_GIT_COMMIT_AUTHOR_LOGIN`, `VERCEL_GIT_COMMIT_AUTHOR_NAME`, `VERCEL_GIT_PREVIOUS_SHA`, `VERCEL_GIT_PULL_REQUEST_ID`. These must never be exposed to the browser unless explicitly intended.
+
+### `repository_dispatch` event types we may consume in Phase 5
+
+`vercel.deployment.success`, `vercel.deployment.error`, `vercel.deployment.ignored`, `vercel.deployment.skipped`, `vercel.deployment.promoted`, `vercel.deployment.canceled`.
+
+### Branch protection interaction
+
+- Phase 0: do **not** add the `Vercel` check to required status checks (foundation PRs intentionally skip).
+- Phase 1+: once the app is stable for two consecutive merges, add `Vercel — Preview` to required checks per `docs/checklists/branch-protection-checklist.md`.
+
+---
+
+## 8. Out-of-Band Manual Steps
 
 These cannot be automated and must be performed by the owner:
 
@@ -136,5 +171,6 @@ These cannot be automated and must be performed by the owner:
 3. Install Cursor GitHub App on this repo and on every portfolio repo.
 4. Enable BugBot in Cursor Settings → BugBot.
 5. Set Cursor billing cap at https://cursor.com/settings/billing.
-6. Configure GitHub Environments protection rules.
-7. Approve initial branch protection rule.
+6. Install Vercel for GitHub app and create the Vercel project (Framework: Next.js, region: lhr1) per `docs/process/vercel-integration.md` §2.
+7. Configure GitHub Environments protection rules (`development`, `staging`, `production`); set `production` to require Owner approval.
+8. Approve initial branch protection rule.
