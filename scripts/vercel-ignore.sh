@@ -23,16 +23,27 @@ if ! command -v git >/dev/null 2>&1; then
   exit 1
 fi
 
-has_next_config=0
+has_next_app=0
+
 for f in next.config.js next.config.ts next.config.mjs next.config.cjs; do
   if [ -f "$f" ]; then
-    has_next_config=1
+    has_next_app=1
     break
   fi
 done
 
-if [ "$has_next_config" -eq 0 ]; then
-  echo "[vercel-ignore] No next.config.* — Phase 0. Skipping deploy."
+if [ "$has_next_app" -eq 0 ] && { [ -d app ] || [ -d pages ]; }; then
+  has_next_app=1
+fi
+
+if [ "$has_next_app" -eq 0 ] && [ -f package.json ]; then
+  if grep -Eq '"next"[[:space:]]*:' package.json || grep -Eq 'next build' package.json; then
+    has_next_app=1
+  fi
+fi
+
+if [ "$has_next_app" -eq 0 ]; then
+  echo "[vercel-ignore] No Next.js app detected (no next.config.*, app/, pages/, or package.json Next.js markers) — Phase 0. Skipping deploy."
   exit 0
 fi
 
