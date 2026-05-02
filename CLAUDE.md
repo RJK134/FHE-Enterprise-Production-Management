@@ -13,6 +13,18 @@
 - **Deployment**: GitHub Pages (static dashboard), Vercel (full app), GitHub Actions (CI/CD)
 - **Repo**: https://github.com/RJK134/FHE-Enterprise-Production-Management
 
+- # PR batching rule
+
+Claude must not create tiny incremental pull requests.
+
+Default behavior:
+- One Claude build session = one branch = one pull request.
+- Batch related fixes together.
+- Do not create follow-up PRs for small fixes.
+- Update the existing PR instead.
+- Leave unrelated or risky work as deferred notes.
+- Final merge is always left to Freddie.
+
 ---
 
 ## Session Start Protocol — Do This First, Every Time
