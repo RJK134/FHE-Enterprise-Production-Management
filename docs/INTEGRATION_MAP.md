@@ -153,7 +153,7 @@ GitHub-side settings to be applied per repo (manual or via API where permissions
 
 ### `repository_dispatch` event types we may consume in Phase 5
 
-`vercel.deployment.success`, `vercel.deployment.error`, `vercel.deployment.ignored`, `vercel.deployment.skipped`, `vercel.deployment.promoted`, `vercel.deployment.canceled`.
+`vercel.deployment.success`, `vercel.deployment.error`, `vercel.deployment.ignored`, `vercel.deployment.skipped`, `vercel.deployment.promoted`.
 
 ### Branch protection interaction
 
