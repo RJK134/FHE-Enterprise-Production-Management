@@ -42,7 +42,7 @@ jobs:
           fi
           echo "ANTHROPIC_API_KEY present; proceeding with Claude Code on-demand."
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
         with:
           fetch-depth: 0

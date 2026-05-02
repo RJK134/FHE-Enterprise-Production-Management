@@ -38,7 +38,7 @@ jobs:
     if: ${{ inputs.refusal_self_check == 'Confirmed — task is in agent''s allowed scope' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: guardrails
         run: |
