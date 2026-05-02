@@ -1,0 +1,70 @@
+name: claude on demand
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  on-demand:
+    name: claude code (on demand)
+    # Trigger only on deliberate human @claude invocations: a comment or an issue
+    # opened / assigned to claude. The PR body itself never triggers this workflow,
+    # because PR descriptions routinely mention `@claude` in documentation context.
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.comment.user.type != 'Bot') ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && github.event.comment.user.type != 'Bot') ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || (github.event.action == 'assigned' && github.event.assignee.login == 'claude')))
+    runs-on: ubuntu-latest
+    steps:
+      - name: guard — anthropic api key configured
+        env:
+          KEY_PRESENT: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        run: |
+          if [ "$KEY_PRESENT" != "true" ]; then
+            echo "ANTHROPIC_API_KEY secret is not configured for this repo."
+            echo "Phase 0 — owner has not yet completed manual blocker EPMC-B1 (see MEMORY.md / DELIVERY_PLAN.md)."
+            echo "Skipping Claude Code on-demand run gracefully. No work performed."
+            exit 0
+          fi
+          echo "ANTHROPIC_API_KEY present; proceeding with Claude Code on-demand."
+
+      - uses: actions/checkout@v4
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        with:
+          fetch-depth: 0
+
+      - name: guardrails
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        run: |
+          echo "FHE-EPMC governance guardrails (claude on demand)"
+          echo "  - Claude must read CLAUDE.md, MEMORY.md, docs/DELIVERY_PLAN.md before acting."
+          echo "  - Claude MUST NOT bypass branch protection."
+          echo "  - Claude MUST NOT merge or approve PRs."
+          echo "  - Claude MUST stop and apply requires-human-review on schema/auth/secrets/CI-CD/external/payments/PII or >5 file changes."
+
+      - name: run claude code
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          trigger_phrase: "@claude"
+          allowed_tools: "Read,Edit,Bash(npm:*),Bash(git:*)"
+          max_turns: 12
+          claude_args: |
+            --append-system-prompt "You are operating in FHE-EPMC. Read CLAUDE.md and MEMORY.md first. Follow PRODUCT_SPECIFICATION.md and DELIVERY_PLAN.md. Never merge or approve PRs. Apply requires-human-review for schema/auth/secrets/CI-CD/external/payments/PII or >5 file changes."

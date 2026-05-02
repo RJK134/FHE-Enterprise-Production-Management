@@ -1,0 +1,87 @@
+name: cursor agent (manual dispatch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: One-sentence task summary for the FHE-Agent.
+        required: true
+        type: string
+      scope:
+        description: Allowed file scope (comma-separated globs or paths).
+        required: true
+        type: string
+      acceptance:
+        description: Acceptance criteria as a checklist (markdown).
+        required: true
+        type: string
+      refusal_self_check:
+        description: Confirmed task is in agent's allowed scope.
+        required: true
+        type: choice
+        options:
+          - "Confirmed — task is in agent's allowed scope"
+          - "Unsure — pause and request human review"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: cursor-manual-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: dispatch FHE-Agent
+    if: ${{ inputs.refusal_self_check == 'Confirmed — task is in agent''s allowed scope' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: guardrails
+        run: |
+          echo "FHE-EPMC Cursor agent guardrails:"
+          echo "  Refuses: schema migrations / auth-RBAC-session / payments-finance-marks / new external integrations / CI-CD config changes / real PII"
+          echo "  Cost cap: £25/month per operator account."
+          echo "  Output branch: cursor/manual-${{ github.run_number }}"
+
+      - name: write task brief
+        run: |
+          mkdir -p .cursor/runs
+          cat > .cursor/runs/manual-${{ github.run_number }}.md <<'BRIEF'
+          # FHE-Agent — manual dispatch ${{ github.run_number }}
+
+          ## Task
+          ${{ inputs.task }}
+
+          ## Scope
+          ${{ inputs.scope }}
+
+          ## Acceptance criteria
+          ${{ inputs.acceptance }}
+
+          ## Refusal self-check
+          ${{ inputs.refusal_self_check }}
+
+          ## Mandatory pre-flight
+          - Read .cursor/agents/FHE-Agent.md
+          - Read CLAUDE.md
+          - Read docs/PROMPTS_LIBRARY.md (Section 6, "Cursor Agent Task Prompt")
+          BRIEF
+          echo "Task brief written to .cursor/runs/manual-${{ github.run_number }}.md"
+          echo
+          echo "NOTE: Phase 0 ships the dispatch surface only. The Cursor GitHub App must be"
+          echo "      installed (Owner action) for the brief to be picked up by the agent runtime."
+
+  refused:
+    name: refused (refusal self-check unconfirmed)
+    if: ${{ inputs.refusal_self_check != 'Confirmed — task is in agent''s allowed scope' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: refusal
+        run: |
+          echo "Refusal self-check not confirmed. Aborting dispatch."
+          echo "Open a Blocker Remediation issue with requires-human-review label instead."
+          exit 1

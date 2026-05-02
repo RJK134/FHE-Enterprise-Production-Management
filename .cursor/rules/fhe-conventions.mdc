@@ -1,0 +1,88 @@
+---
+description: Always-on coding conventions for every FHE-managed repo. Loaded by Cursor on every session.
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# FHE Coding Conventions (always-on)
+
+These conventions are normative. Violations must be flagged before any commit.
+
+## TypeScript
+
+- Strict mode always: `"strict": true`.
+- No `any` types — use `unknown` and narrow explicitly.
+- Prefer `type` over `interface` for component props.
+- All async functions must handle errors explicitly.
+- All exported functions must have JSDoc.
+
+## React / Next.js
+
+- App Router only — no Pages Router.
+- Server Components by default; `'use client'` only where interaction requires it.
+- No inline styles — Tailwind utility classes only.
+- All interactive elements have `aria-label` or accessible names.
+- Data fetching via typed service layer only — no raw `fetch` in components.
+
+## Data & State
+
+- No `localStorage`, `sessionStorage`, `cookies`, or `IndexedDB` for sensitive data.
+- React state for UI state only; cross-page state goes through the service layer.
+- All GitHub API calls server-side; never expose tokens client-side.
+- Never render secret values anywhere.
+
+## Tests
+
+- New functionality must include adjacent tests in `__tests__/`.
+- `npm run lint && npm run typecheck && npm test && npm run build` before opening any PR.
+- CI gates must pass — no exceptions.
+
+## Security
+
+- No new secrets, credentials, or real PII in any committed file.
+- No `--no-verify` commits.
+- No force-push to `main`.
+- No admin override outside genuine break-glass.
+
+## Git Discipline
+
+- Branches: `claude/<task>` for Claude Code, `cursor/<issue|manual>-N` for Cursor agent, `feat/<short>`, `fix/<short>`, `chore/<short>` for humans.
+- Commit messages: conventional commits — `type(scope): subject`.
+- Smallest coherent change; no bundling.
+- PR template filled completely; no empty rollback plans.
+
+## Refusal Boundaries (Cursor agent enforces)
+
+The Cursor agent refuses, labels `requires-human-review`, and stops on:
+
+- Schema migrations (Prisma).
+- Auth / RBAC / session middleware.
+- Payments / finance / marks retention.
+- New external integrations.
+- CI/CD configuration changes.
+- Real PII or production credentials.
+- More than 5 files in a single task.
+
+## File / Folder Layout (Phase 1+ Next.js apps)
+
+- `src/app/...` — App Router routes.
+- `src/lib/services/...` — typed service layer.
+- `src/lib/schemas/...` — Zod schemas.
+- `src/components/...` — UI components.
+- `__tests__/` adjacent to source.
+
+## Documentation Discipline
+
+- `README.md` reflects current state.
+- `CLAUDE.md` and `MEMORY.md` updated each session.
+- `docs/DELIVERY_PLAN.md` updated only via PR with the planning template.
+
+## Forbidden
+
+- Bypassing branch protection.
+- Approving your own PR.
+- Merging without required checks + ≥ 1 approving human review.
+- Disabling required checks.
+- Storing secrets in code or `.env` committed files.
+- Logging PII.

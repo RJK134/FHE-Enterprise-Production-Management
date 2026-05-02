@@ -1,0 +1,74 @@
+name: Bug / Regression
+description: A defect, regression, or unexpected behaviour.
+title: "fix: <short-title>"
+labels: ["bug", "needs-triage"]
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "P0 — production breakage / data loss / security"
+        - "P1 — broken feature, no workaround"
+        - "P2 — broken feature, workaround exists"
+        - "P3 — minor / cosmetic"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "production | staging | development | local"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, screenshots, request IDs. Do NOT paste real PII or secrets.
+    validations:
+      required: true
+
+  - type: input
+    id: first-seen
+    attributes:
+      label: First seen
+      description: Commit SHA or release tag where the regression first appeared, if known.
+
+  - type: dropdown
+    id: requires-human-review
+    attributes:
+      label: Fix likely touches a human-gated domain?
+      description: Schema / auth / RBAC / secrets / CI-CD / external integrations / payments / PII.
+      options:
+        - "No"
+        - "Yes — apply requires-human-review label"
+    validations:
+      required: true

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://cursor.com/schemas/agent-environment.json",
+  "version": 1,
+  "name": "FHE-Agent universal environment",
+  "description": "Build environment for FHE-Agent background runs across FHE-managed repos. Phase 0 ships a docs/governance baseline; Phase 1+ extends with Node/Next.js tooling.",
+  "runtimes": {
+    "node": "20"
+  },
+  "install": [
+    "echo 'FHE-Agent environment install — Phase 0 baseline'",
+    "test -f package.json && npm ci || echo 'no package.json — Phase 0'"
+  ],
+  "verify": [
+    "bash scripts/verify-foundation.sh"
+  ],
+  "scripts": {
+    "lint": "npm run lint",
+    "typecheck": "npm run typecheck",
+    "test": "npm test",
+    "build": "npm run build"
+  },
+  "secrets": [],
+  "limits": {
+    "maxMinutes": 20,
+    "maxFilesTouched": 5
+  },
+  "refusal_self_check_required": true,
+  "branch_naming": {
+    "issue_triggered": "cursor/issue-{issue_number}",
+    "manual_dispatch": "cursor/manual-{run_number}"
+  },
+  "notes": "This file is read by the Cursor Background Agent runtime when configured. Phase 0 of FHE-EPMC is documentation/governance; the install/verify steps reflect that. Update for Phase 1+ once the Next.js app lands."
+}

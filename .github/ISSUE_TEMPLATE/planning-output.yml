@@ -1,0 +1,53 @@
+name: Planning Output
+description: A planning artefact — Plan refresh, deep-review summary, or scan-derived blocker list.
+title: "plan: <short-title>"
+labels: ["planning", "needs-review"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Planning kind
+      options:
+        - "Plan refresh — DELIVERY_PLAN.md update"
+        - "Deep-review summary — repo deep-review engine output"
+        - "Scan output — repo intelligence scan blocker list"
+        - "Capacity / handoff pack"
+    validations:
+      required: true
+
+  - type: input
+    id: target-repo
+    attributes:
+      label: Target repo
+      placeholder: "RJK134/SJMS-2.5"
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: 3–5 sentences summarising the planning output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence references
+      description: Scan run URLs, UAT records, ledger entries supporting this output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-changes
+    attributes:
+      label: Proposed changes (file-level)
+      description: Which files / sections in DELIVERY_PLAN.md or other docs should be updated?
+    validations:
+      required: true
+
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions for the owner

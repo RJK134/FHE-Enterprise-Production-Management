@@ -1,0 +1,61 @@
+name: claude auto review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: automatic PR review
+    if: |
+      github.event.pull_request.draft == false &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: guard — anthropic api key configured
+        env:
+          KEY_PRESENT: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        run: |
+          if [ "$KEY_PRESENT" != "true" ]; then
+            echo "ANTHROPIC_API_KEY secret is not configured for this repo."
+            echo "Phase 0 — owner has not yet completed manual blocker EPMC-B1 (see MEMORY.md / DELIVERY_PLAN.md)."
+            echo "Skipping Claude auto-review run gracefully. No review performed."
+            exit 0
+          fi
+          echo "ANTHROPIC_API_KEY present; proceeding with Claude auto-review."
+
+      - uses: actions/checkout@v4
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        with:
+          fetch-depth: 0
+
+      - name: guardrails
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        run: |
+          echo "FHE-EPMC governance guardrails (claude auto review)"
+          echo "  - Claude reviews; it does NOT approve or merge."
+          echo "  - Claude does NOT push fix commits unless authorised by an @claude comment."
+          echo "  - Claude posts inline review comments only."
+
+      - name: claude code review
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          mode: review
+          allowed_tools: "Read,Bash(git:*)"
+          max_turns: 6
+          claude_args: |
+            --append-system-prompt "You are running automatic PR review for FHE-EPMC. Read CLAUDE.md and docs/checklists/pr-review-checklist.md. Post inline comments only. NEVER approve. NEVER request changes that block on opinion. Flag concrete issues only. NEVER push fix commits unless an @claude comment authorises it."
