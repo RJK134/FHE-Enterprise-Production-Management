@@ -150,7 +150,7 @@ Useful for: end-to-end test orchestration, post-deploy smoke tests, governance l
 | Forked PR deploy stalled | Maintainer must click **Authorize Deployment** in the PR. |
 | Production deploy stuck | Check GitHub Environment approval queue — Owner must approve. |
 | Wrong region | Update `vercel.json` `regions`. Does not retrigger past deploys. |
-| Need to silence comments | Project Settings → Git → toggle off comment switches. Do not edit `github.silent` in `vercel.json` (deprecated). |
+| Need to silence comments | Preferred: Project Settings → Git → toggle off comment switches. If this repo documents `github.silent` in `vercel.json`, keep both references aligned. |
 | Need to disable a branch's deploys | Add the branch to `git.deploymentEnabled` with `false`. Commit + merge. |
 
 ---
