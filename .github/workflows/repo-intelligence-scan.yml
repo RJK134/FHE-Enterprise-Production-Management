@@ -69,7 +69,7 @@ jobs:
           } > .scan-output/scan-${{ github.run_id }}.md
 
       - name: upload scan report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: repo-intelligence-scan-${{ github.run_id }}
           path: .scan-output/
