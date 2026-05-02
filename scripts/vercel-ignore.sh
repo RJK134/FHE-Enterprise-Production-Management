@@ -38,17 +38,25 @@ fi
 
 # App exists. Check whether this commit changed anything outside docs / governance.
 # If the diff is purely docs/scripts/.github/.cursor, skip the deploy.
-# VERCEL_GIT_PREVIOUS_SHA is provided by Vercel for incremental git diffing.
+# Prefer VERCEL_GIT_PREVIOUS_SHA for incremental git diffing, but fall back to
+# HEAD~1 when the previous SHA is unavailable or not present in a shallow clone.
+diff_base=""
 if [ -n "${VERCEL_GIT_PREVIOUS_SHA:-}" ] && git rev-parse --verify "$VERCEL_GIT_PREVIOUS_SHA" >/dev/null 2>&1; then
-  changed=$(git diff --name-only "$VERCEL_GIT_PREVIOUS_SHA" HEAD || true)
+  diff_base="$VERCEL_GIT_PREVIOUS_SHA"
+elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+  diff_base="HEAD~1"
+fi
+
+if [ -n "$diff_base" ]; then
+  changed=$(git diff --name-only "$diff_base" HEAD || true)
   if [ -n "$changed" ]; then
     non_docs=$(echo "$changed" | grep -Ev '^(docs/|scripts/|\.github/|\.cursor/|README\.md|CLAUDE\.md|MEMORY\.md|SKILLS\.md|\.gitignore|LICENSE|\.nvmrc|\.vercelignore|vercel\.json)$' || true)
     if [ -z "$non_docs" ]; then
-      echo "[vercel-ignore] Diff is docs/governance only. Skipping deploy."
+      echo "[vercel-ignore] Diff from $diff_base is docs/governance only. Skipping deploy."
       exit 0
     fi
   fi
 fi
 
-echo "[vercel-ignore] No usable VERCEL_GIT_PREVIOUS_SHA; proceeding with deploy."
+echo "[vercel-ignore] No usable git diff base found; proceeding with deploy."
 exit 1
