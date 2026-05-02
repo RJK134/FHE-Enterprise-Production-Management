@@ -18,6 +18,11 @@
 
 set -euo pipefail
 
+if ! command -v git >/dev/null 2>&1; then
+  echo "[vercel-ignore] git not available in build env. Proceeding with deploy."
+  exit 1
+fi
+
 has_next_config=0
 for f in next.config.js next.config.ts next.config.mjs next.config.cjs; do
   if [ -f "$f" ]; then
@@ -37,7 +42,7 @@ fi
 if [ -n "${VERCEL_GIT_PREVIOUS_SHA:-}" ] && git rev-parse --verify "$VERCEL_GIT_PREVIOUS_SHA" >/dev/null 2>&1; then
   changed=$(git diff --name-only "$VERCEL_GIT_PREVIOUS_SHA" HEAD || true)
   if [ -n "$changed" ]; then
-    non_docs=$(echo "$changed" | grep -Ev '^(docs/|scripts/|\.github/|\.cursor/|README\.md|CLAUDE\.md|MEMORY\.md|SKILLS\.md|\.gitignore|LICENSE)' || true)
+    non_docs=$(echo "$changed" | grep -Ev '^(docs/|scripts/|\.github/|\.cursor/|README\.md|CLAUDE\.md|MEMORY\.md|SKILLS\.md|\.gitignore|LICENSE|\.nvmrc|\.vercelignore|vercel\.json)$' || true)
     if [ -z "$non_docs" ]; then
       echo "[vercel-ignore] Diff is docs/governance only. Skipping deploy."
       exit 0
@@ -45,5 +50,5 @@ if [ -n "${VERCEL_GIT_PREVIOUS_SHA:-}" ] && git rev-parse --verify "$VERCEL_GIT_
   fi
 fi
 
-echo "[vercel-ignore] App present and diff includes app code. Proceeding with deploy."
+echo "[vercel-ignore] No usable VERCEL_GIT_PREVIOUS_SHA; proceeding with deploy."
 exit 1
