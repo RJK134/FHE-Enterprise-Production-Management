@@ -10,6 +10,8 @@ docs/
 
 # Setup / verification scripts (not part of the runtime)
 scripts/
+!scripts/
+!scripts/vercel-ignore.sh
 
 # Foundation identity files
 CLAUDE.md
