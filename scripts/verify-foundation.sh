@@ -51,7 +51,6 @@ REQUIRED=(
   ".cursor/rules/fhe-conventions.mdc"
   ".cursor/environment.json"
 
-  "scripts/phase-0-noop.js"
   "scripts/setup-repo-standards.sh"
   "scripts/setup-repo-standards.ps1"
   "scripts/setup-review-intelligence.sh"
