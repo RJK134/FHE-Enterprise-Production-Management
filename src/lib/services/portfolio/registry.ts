@@ -39,7 +39,7 @@ const REGISTRY: ReadonlyArray<PortfolioRepo> = [
   {
     slug: "RJK134/FHE-Enterprise-Production-Management",
     displayName: "FHE-EPMC",
-    stack: "Next.js 14 · TypeScript · Tailwind · Octokit · Vercel",
+    stack: "Next.js 15.5.15 · TypeScript · Tailwind · Octokit · Vercel",
     currentPhase: "Phase 1 — Live Control Tower MVP",
     readinessEstimate: 0,
     description:
