@@ -1,4 +1,5 @@
 import "server-only";
+import { RequestError } from "@octokit/request-error";
 import { getGithubClient } from "./client";
 import { PullRequestSummary, type PrCheckSummary } from "@/lib/schemas/pr";
 import { RepoSlug } from "@/lib/schemas/repo";
@@ -85,10 +86,19 @@ export async function listOpenPullRequests(
             per_page: 100,
           });
           checkSummary = summariseChecks(data.check_runs ?? []);
-        } catch {
-          // Treat upstream check failures as "no signal" rather than blowing up
-          // the whole list — the dashboard remains useful even if checks 404.
-          checkSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
+        } catch (error: unknown) {
+          // 404 — checks API not available for this ref/repo (e.g. the repo has
+          //        never had a check run, or the ref is a fork without access).
+          // 422 — unprocessable ref shape; GitHub cannot resolve the ref.
+          // Both are expected "no signal" conditions: degrade silently.
+          if (error instanceof RequestError && (error.status === 404 || error.status === 422)) {
+            checkSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
+          } else {
+            // Any other failure (403 insufficient scope, 429 rate-limited, 5xx, …)
+            // is an operational problem that must not be silently masked.
+            // Re-throw so the caller can surface the misconfiguration.
+            throw error;
+          }
         }
       }
 
