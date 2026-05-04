@@ -167,6 +167,51 @@ describe("listOpenPullRequests — check-run error handling", () => {
   });
 });
 
+describe("listOpenPullRequests — schema validation (malformed PR data)", () => {
+  let mockPullsList: ReturnType<typeof vi.fn>;
+  let mockChecksListForRef: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    mockPullsList = vi.fn();
+    mockChecksListForRef = vi.fn().mockResolvedValue({ data: { check_runs: [] } });
+    (getGithubClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      pulls: { list: mockPullsList },
+      checks: { listForRef: mockChecksListForRef },
+    });
+  });
+
+  it("drops a PR whose number is 0 (fails positive integer constraint)", async () => {
+    mockPullsList.mockResolvedValue({ data: [makePr({ number: 0 })] });
+    const result = await listOpenPullRequests("RJK134/test-repo");
+    expect(result).toHaveLength(0);
+  });
+
+  it("drops a PR with a non-URL html_url", async () => {
+    mockPullsList.mockResolvedValue({ data: [makePr({ html_url: "not-a-url" })] });
+    const result = await listOpenPullRequests("RJK134/test-repo");
+    expect(result).toHaveLength(0);
+  });
+
+  it("drops a PR with an empty headRef", async () => {
+    mockPullsList.mockResolvedValue({
+      data: [makePr({ head: { sha: "abc123", ref: "" } })],
+    });
+    const result = await listOpenPullRequests("RJK134/test-repo");
+    expect(result).toHaveLength(0);
+  });
+
+  it("drops only malformed PRs and keeps valid ones in a mixed batch", async () => {
+    const valid = makePr({ number: 2, title: "Valid PR" });
+    const badNumber = makePr({ number: 0, title: "Bad number" });
+    const badUrl = makePr({ number: 3, title: "Bad URL", html_url: "not-a-url" });
+    mockPullsList.mockResolvedValue({ data: [valid, badNumber, badUrl] });
+
+    const result = await listOpenPullRequests("RJK134/test-repo");
+    expect(result).toHaveLength(1);
+    expect(result[0]?.number).toBe(2);
+  });
+});
+
 describe("listOpenPullRequests — limit clamping", () => {
   let mockPullsList: ReturnType<typeof vi.fn>;
   let mockChecksListForRef: ReturnType<typeof vi.fn>;
