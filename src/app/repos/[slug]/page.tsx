@@ -12,14 +12,26 @@ type PageProps = {
   readonly params: { slug: string };
 };
 
+function getPortfolioAllowlist(): Set<string> {
+  return new Set(
+    (process.env.PORTFOLIO_ALLOWLIST ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+}
+
 /**
  * Per-repo drill-down. Server Component. Renders the registry entry and a
  * live PR list when configured, otherwise a graceful "not connected" state.
  */
 export default async function RepoDrillDownPage({ params }: PageProps): Promise<JSX.Element> {
   const slug = decodeURIComponent(params.slug);
+  const allowlist = getPortfolioAllowlist();
+  if (!allowlist.has(slug)) notFound();
+
   const repo = findPortfolioRepo(slug);
-  if (!repo) notFound();
+  if (!repo || !allowlist.has(repo.slug)) notFound();
 
   const connected = isGithubConfigured();
   const pulls = connected ? await listOpenPullRequests(repo.slug, { limit: 25 }) : [];
