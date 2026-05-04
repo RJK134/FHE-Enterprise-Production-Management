@@ -41,7 +41,7 @@ function makeRequestError(status: number): RequestError {
     request: {
       method: "GET",
       url: "https://api.github.com/test",
-      headers: { authorization: "token [REDACTED]" },
+      headers: {},
     },
   });
 }
