@@ -61,6 +61,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 20
+          cache: npm
+      - name: install
+        run: npm ci
       - name: lint
         run: npm run lint
       - name: typecheck

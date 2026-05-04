@@ -82,6 +82,42 @@ The SJMS-2.5 Cursor Agent pattern is the proven foundation for all repos:
   7. Run `scripts/setup-repo-standards.sh --repo RJK134/SJMS-2.5` (and EquiSmile, herm-platform) once owner approves.
   8. Resolve FutureHorizonsEducation org access for full portfolio coverage.
 
+### 2026-05-03 — Phase 1 Live Control Tower MVP — dashboard scaffold
+- **Objective**: Replace the Phase 0 placeholder npm script surface with the real Next.js 14 App Router dashboard, typed service layer, and tests.
+- **Files added on this branch (`claude/fhe-epmc-phase-1-dashboard`)**:
+  - **App + components:** `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/repos/[slug]/page.tsx`, `src/app/globals.css`, `src/components/{portfolio-card,connection-banner,pr-row}.tsx`.
+  - **Typed service layer:** `src/lib/env.ts` (Zod-validated server env), `src/lib/services/portfolio/registry.ts` (typed config), `src/lib/services/github/client.ts` (Octokit factory with graceful no-token degradation), `src/lib/services/github/pulls.ts` (open PRs + check summary).
+  - **Schemas:** `src/lib/schemas/repo.ts`, `src/lib/schemas/pr.ts`.
+  - **Tests:** `src/lib/__tests__/env.test.ts`, `src/lib/services/portfolio/__tests__/registry.test.ts`, `src/lib/schemas/__tests__/repo.test.ts` (13 tests).
+  - **Tooling:** `tsconfig.json` (strict mode + `noUncheckedIndexedAccess`), `next.config.mjs`, `tailwind.config.ts`, `postcss.config.mjs`, `vitest.config.ts`, `.eslintrc.json`, `.gitignore`, `next-env.d.ts`, `.env.example`, `src/__mocks__/server-only.ts`.
+- **Files updated**:
+  - `package.json` — real Phase 1 scripts (`dev`/`build`/`start`/`lint`/`typecheck`/`test`/`test:watch`/`verify:foundation`), real deps: Next 15.5.15, React 18.3, Octokit 21.1, Zod 3.24, server-only 0.0.1; devDeps: Vitest 4.1.5, happy-dom 20.9, Tailwind 3.4, TypeScript 5.6, ESLint 8.57 + eslint-config-next 15.5.15.
+  - `.github/workflows/ci.yml` — added `npm ci` before lint/typecheck/test/build; added npm cache.
+  - `scripts/verify-foundation.{sh,ps1}` — removed the deleted `phase-0-noop.js` entry.
+- **Files removed**: `scripts/phase-0-noop.js` (replaced by real Next.js scripts).
+- **Local verification (Node 22)**:
+  - `npm run lint` — PASS (no warnings or errors; `next lint` is deprecated in Next 16 — migration to ESLint CLI deferred to a future small PR).
+  - `npm run typecheck` — PASS.
+  - `npm test` — PASS (13/13 across 3 suites).
+  - `npm run build` — PASS (3 routes; 102 kB shared chunks).
+  - `bash scripts/verify-foundation.sh` — PASS.
+  - `bash scripts/vercel-ignore.sh` — exits with the expected per-diff signal (Vercel will deploy once the PR is open because `next.config.mjs` and `src/**` are now present, taking the script past its Phase-0 skip).
+- **Security posture**:
+  - All GitHub calls server-side; client components never see tokens.
+  - `server-only` import gates the env loader, the GitHub client, the registry, and the pulls service against accidental client-side import.
+  - Bumped Next.js from 14.2.33 → 15.5.15 to clear the high-severity advisories on 14.x (DoS via Server Components, image-cache exhaustion, request-smuggling); only one moderate transitive remains (`next` bundles its own `postcss <8.5.10` for CSS XSS — inherited across the Next ecosystem; documented as accepted-and-watched, fix lands when Next bumps its bundled postcss).
+  - No new secrets committed; `.env.example` enumerates only the variable names with empty values.
+- **Risk acceptance / watch items**:
+  - Transitive `postcss <8.5.10` inside `node_modules/next/node_modules/postcss` (moderate; build-time CSS XSS in the stringifier; not exploitable from runtime traffic; Next-side fix expected).
+  - `next lint` deprecation warning — non-blocking on Next 15; Next 16 will require migrating to the ESLint CLI directly.
+- **PR**: Draft, labelled `requires-human-review` (>5 files; introduces the application code surface).
+- **Next Steps**:
+  1. Owner: review and merge the Phase 1 dashboard scaffold PR.
+  2. Owner: deploy to Vercel preview, set `GITHUB_TOKEN` in Vercel preview env var so the live PR list renders against `RJK134/*`.
+  3. Future Claude session: extend service layer with branch-protection signal + readiness score derivation per `docs/ARCHITECTURE.md` §3.2.
+  4. Future Claude session: per-PR drill-down view (PR → check runs → conversation states).
+  5. Owner action item: portfolio onboarding (run `scripts/setup-repo-standards.sh` against SJMS-2.5, EquiSmile, herm-platform) — must be triggered from a session that has GitHub MCP access to those repos. Cannot be done from FHE-EPMC sessions where MCP is restricted to this repo only.
+
 ### 2026-05-01 — Phase 0 Foundation (Vercel-for-GitHub scaffolding)
 - **Objective**: Add the Vercel for GitHub integration scaffolding so Phase 1 deploys are smooth out of the gate, without producing spurious empty deploys during Phase 0.
 - **Files added on this branch**:
