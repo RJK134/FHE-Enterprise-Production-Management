@@ -10,10 +10,25 @@ import { z } from "zod";
  */
 import "server-only";
 
+const portfolioSlugPattern = /^[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)?$/;
+
+const PortfolioAllowlistSchema = z
+  .string()
+  .trim()
+  .min(1, "must not be empty")
+  .refine((value) => {
+    const entries = value.split(",").map((entry) => entry.trim());
+    return (
+      entries.length > 0 &&
+      entries.every((entry) => entry.length > 0 && portfolioSlugPattern.test(entry))
+    );
+  }, "must be a comma-separated list of non-empty GitHub slugs")
+  .optional();
+
 const EnvSchema = z.object({
   GITHUB_TOKEN: z.string().min(1).optional(),
   GITHUB_API_URL: z.string().url().optional(),
-  PORTFOLIO_ALLOWLIST: z.string().optional(),
+  PORTFOLIO_ALLOWLIST: PortfolioAllowlistSchema,
 });
 
 export type Env = z.infer<typeof EnvSchema>;
