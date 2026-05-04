@@ -166,3 +166,52 @@ describe("listOpenPullRequests — check-run error handling", () => {
     expect(result[0]?.checks.total).toBe(0);
   });
 });
+
+describe("listOpenPullRequests — limit clamping", () => {
+  let mockPullsList: ReturnType<typeof vi.fn>;
+  let mockChecksListForRef: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    mockPullsList = vi.fn().mockResolvedValue({ data: [] });
+    mockChecksListForRef = vi.fn();
+    (getGithubClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      pulls: { list: mockPullsList },
+      checks: { listForRef: mockChecksListForRef },
+    });
+  });
+
+  it("clamps limit: 0 to per_page: 1 (GitHub minimum)", async () => {
+    await listOpenPullRequests("RJK134/test-repo", { limit: 0 });
+    expect(mockPullsList).toHaveBeenCalledWith(
+      expect.objectContaining({ per_page: 1 }),
+    );
+  });
+
+  it("clamps negative limit to per_page: 1", async () => {
+    await listOpenPullRequests("RJK134/test-repo", { limit: -10 });
+    expect(mockPullsList).toHaveBeenCalledWith(
+      expect.objectContaining({ per_page: 1 }),
+    );
+  });
+
+  it("clamps limit: 200 to per_page: 100 (GitHub maximum)", async () => {
+    await listOpenPullRequests("RJK134/test-repo", { limit: 200 });
+    expect(mockPullsList).toHaveBeenCalledWith(
+      expect.objectContaining({ per_page: 100 }),
+    );
+  });
+
+  it("passes through an in-range limit unchanged", async () => {
+    await listOpenPullRequests("RJK134/test-repo", { limit: 10 });
+    expect(mockPullsList).toHaveBeenCalledWith(
+      expect.objectContaining({ per_page: 10 }),
+    );
+  });
+
+  it("defaults to per_page: 25 when no limit is provided", async () => {
+    await listOpenPullRequests("RJK134/test-repo");
+    expect(mockPullsList).toHaveBeenCalledWith(
+      expect.objectContaining({ per_page: 25 }),
+    );
+  });
+});

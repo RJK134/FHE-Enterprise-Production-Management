@@ -62,7 +62,7 @@ export async function listOpenPullRequests(
   if (!gh) return [];
 
   const [owner, repo] = slug.split("/") as [string, string];
-  const limit = Math.min(options.limit ?? 25, 100);
+  const limit = Math.max(1, Math.min(options.limit ?? 25, 100));
 
   const { data: pulls } = await gh.pulls.list({
     owner,
