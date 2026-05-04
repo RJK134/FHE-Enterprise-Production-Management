@@ -72,39 +72,42 @@ export async function listOpenPullRequests(
     direction: "desc",
   });
 
-  const summaries: PullRequestSummary[] = [];
-  for (const pr of pulls as ReadonlyArray<PullsListItem>) {
-    const headSha = pr.head?.sha;
-    let checkSummary: PrCheckSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
-    if (typeof headSha === "string" && headSha.length > 0) {
-      try {
-        const { data } = await gh.checks.listForRef({
-          owner,
-          repo,
-          ref: headSha,
-          per_page: 100,
-        });
-        checkSummary = summariseChecks(data.check_runs ?? []);
-      } catch {
-        // Treat upstream check failures as "no signal" rather than blowing up
-        // the whole list — the dashboard remains useful even if checks 404.
-        checkSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
+  const summaries = await Promise.all(
+    (pulls as ReadonlyArray<PullsListItem>).map(async (pr) => {
+      const headSha = pr.head?.sha;
+      let checkSummary: PrCheckSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
+      if (typeof headSha === "string" && headSha.length > 0) {
+        try {
+          const { data } = await gh.checks.listForRef({
+            owner,
+            repo,
+            ref: headSha,
+            per_page: 100,
+          });
+          checkSummary = summariseChecks(data.check_runs ?? []);
+        } catch {
+          // Treat upstream check failures as "no signal" rather than blowing up
+          // the whole list — the dashboard remains useful even if checks 404.
+          checkSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
+        }
       }
-    }
 
-    const parsed = PullRequestSummary.safeParse({
-      number: pr.number,
-      title: pr.title ?? "(untitled)",
-      authorLogin: pr.user?.login ?? "unknown",
-      isDraft: Boolean(pr.draft),
-      htmlUrl: pr.html_url,
-      headRef: pr.head?.ref ?? "",
-      baseRef: pr.base?.ref ?? "",
-      createdAt: pr.created_at,
-      updatedAt: pr.updated_at,
-      checks: checkSummary,
-    });
-    if (parsed.success) summaries.push(parsed.data);
-  }
-  return summaries;
+      const parsed = PullRequestSummary.safeParse({
+        number: pr.number,
+        title: pr.title ?? "(untitled)",
+        authorLogin: pr.user?.login ?? "unknown",
+        isDraft: Boolean(pr.draft),
+        htmlUrl: pr.html_url,
+        headRef: pr.head?.ref ?? "",
+        baseRef: pr.base?.ref ?? "",
+        createdAt: pr.created_at,
+        updatedAt: pr.updated_at,
+        checks: checkSummary,
+      });
+
+      return parsed.success ? parsed.data : null;
+    }),
+  );
+
+  return summaries.filter((summary): summary is PullRequestSummary => summary !== null);
 }
