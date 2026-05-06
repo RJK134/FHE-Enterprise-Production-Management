@@ -7,10 +7,10 @@
 
 ## Active Context
 
-**Last Updated**: 2026-05-01  
-**Current Phase**: Phase 0 — Foundation Build  
-**Sprint Focus**: Establishing FHE-EPMC repo structure, core docs, agent configs, GitHub workflows  
-**Owner**: Freddie Finn (RJK134 / Future Horizons Education)  
+**Last Updated**: 2026-05-04
+**Current Phase**: Phase 1 — Live Control Tower MVP
+**Sprint Focus**: Closing Phase 1 P0 (live readiness score) + opening Phase 1 P1 (per-PR drill-down with merge readiness)
+**Owner**: Freddie Finn (RJK134 / Future Horizons Education)
 **Primary Contact Repo**: https://github.com/RJK134/FHE-Enterprise-Production-Management
 
 ---
@@ -81,6 +81,33 @@ The SJMS-2.5 Cursor Agent pattern is the proven foundation for all repos:
   6. Phase 1 kickoff: scaffold the Next.js 14 dashboard with the typed GitHub service layer per `docs/ARCHITECTURE.md`.
   7. Run `scripts/setup-repo-standards.sh --repo RJK134/SJMS-2.5` (and EquiSmile, herm-platform) once owner approves.
   8. Resolve FutureHorizonsEducation org access for full portfolio coverage.
+
+### 2026-05-04 — Phase 1 Live Control Tower MVP — readiness signals + per-PR drill-down
+- **Objective**: Close Phase 1 P0 by deriving the readiness score from real signals, and open Phase 1 P1 by adding the per-PR drill-down with merge-readiness signal.
+- **Branch**: `claude/fhe-epmc-phase-1-readiness`.
+- **Files added**:
+  - **Schemas:** `src/lib/schemas/{readiness,pull-detail,branch-protection,alerts}.ts`.
+  - **Services:** `src/lib/services/github/{branch-protection,alerts,pull-detail}.ts`; `src/lib/services/readiness/score.ts`.
+  - **Components:** `src/components/{readiness-badge,merge-readiness,check-run-list}.tsx`.
+  - **Route:** `src/app/repos/[slug]/pulls/[number]/page.tsx`.
+  - **Tests:** `__tests__/readiness.test.ts`, `__tests__/pull-detail.test.ts`, `__tests__/alerts.test.ts`, `__tests__/pull-detail.test.ts` (services), `__tests__/score.test.ts`. Total: **56 tests passing** (43 new + 13 from PR #6).
+- **Files updated**:
+  - `src/app/page.tsx` — fetches `computeReadiness` per repo when connected; passes snapshot to `PortfolioCard`.
+  - `src/app/repos/[slug]/page.tsx` — adds the readiness badge + per-axis signals; routes PR rows to the new drill-down.
+  - `src/components/portfolio-card.tsx` — accepts optional `readiness` prop; renders `ReadinessBadge` for both live and registry-estimate states.
+  - `src/components/pr-row.tsx` — links to `/repos/[slug]/pulls/[number]`; secondary link to GitHub.
+- **Readiness scoring** — implements the four axes GitHub answers authoritatively today (`security` via CodeQL, `governance` via branch protection, `dependencies` via Dependabot, `documentation` and `operational` deferred to Phase 3/5 with registry-estimate fallback). Snapshot is tagged `live` / `partial` / `registry-estimate` so the UI is honest about source quality.
+- **Merge readiness** — composes from PR draft state, review counts, branch-protection required-checks compliance, and Octokit's `mergeable` flag. Returns reasons array so the UI can render a precise blocker list.
+- **Local verification**: lint PASS · typecheck PASS · test 56/56 PASS · build PASS (4 routes; 102 kB shared chunks) · `bash scripts/verify-foundation.sh` PASS.
+- **Governance**: All new services are server-only via the `server-only` import marker. No new dependencies added. `requires-human-review` label applied per CLAUDE.md (>5 files; introduces the readiness scoring surface).
+- **Watch items**:
+  - `next lint` deprecation — Next 16 will require migration to ESLint CLI; small follow-up.
+  - Documentation and operational axes are still registry estimates pending Phase 3 (Evidence Lake) and Phase 5 (CI pass-rate ingestion).
+  - Live rendering of readiness on the homepage triggers `n_repos × 2` GitHub API calls per page load. With four repos that's 8 calls — negligible. Phase 2 will add caching with `revalidate` once we hit a usage signal.
+- **Next Steps**:
+  1. Owner: review and merge this PR.
+  2. After merge: with `GITHUB_TOKEN` configured in Vercel, the homepage will render live readiness badges and PR rows will link to a real per-PR drill-down with merge readiness.
+  3. Future Claude session — Phase 1 P1 remaining: per-repo blocker tracker (append-only history), placeholder authentication wall, BugBot/Copilot/Claude review-state attribution on PR rows.
 
 ### 2026-05-03 — Phase 1 Live Control Tower MVP — dashboard scaffold
 - **Objective**: Replace the Phase 0 placeholder npm script surface with the real Next.js 14 App Router dashboard, typed service layer, and tests.

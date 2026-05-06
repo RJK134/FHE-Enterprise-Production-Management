@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { findPortfolioRepo } from "@/lib/services/portfolio/registry";
 import { listOpenPullRequests } from "@/lib/services/github/pulls";
+import { computeReadiness } from "@/lib/services/readiness/score";
 import { isGithubConfigured } from "@/lib/env";
 import { ConnectionBanner } from "@/components/connection-banner";
 import { PrRow } from "@/components/pr-row";
+import { ReadinessBadge } from "@/components/readiness-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +36,10 @@ export default async function RepoDrillDownPage({ params }: PageProps): Promise<
   if (!repo || !allowlist.has(repo.slug)) notFound();
 
   const connected = isGithubConfigured();
-  const pulls = connected ? await listOpenPullRequests(repo.slug, { limit: 25 }) : [];
+  const [pulls, readiness] = await Promise.all([
+    connected ? listOpenPullRequests(repo.slug, { limit: 25 }) : Promise.resolve([]),
+    computeReadiness(repo),
+  ]);
 
   return (
     <section aria-labelledby="repo-heading" className="space-y-6">
@@ -44,13 +49,32 @@ export default async function RepoDrillDownPage({ params }: PageProps): Promise<
           ← Portfolio
         </Link>
       </nav>
-      <header>
-        <h2 id="repo-heading" className="text-2xl font-semibold text-ink-900">
-          {repo.displayName}
-        </h2>
-        <p className="text-xs text-ink-400 font-mono">{repo.slug}</p>
-        <p className="mt-2 text-sm text-ink-700 max-w-3xl">{repo.description}</p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h2 id="repo-heading" className="text-2xl font-semibold text-ink-900">
+            {repo.displayName}
+          </h2>
+          <p className="text-xs text-ink-400 font-mono">{repo.slug}</p>
+          <p className="mt-2 text-sm text-ink-700 max-w-3xl">{repo.description}</p>
+        </div>
+        <ReadinessBadge snapshot={readiness} />
       </header>
+
+      <section aria-labelledby="readiness-heading" className="rounded-xl border border-ink-200 bg-white p-5">
+        <h3 id="readiness-heading" className="text-base font-semibold text-ink-900">
+          Readiness signals
+        </h3>
+        <ul className="mt-3 space-y-1 text-sm text-ink-700">
+          {readiness.axes.map((axis) => (
+            <li key={axis.axis} className="flex justify-between gap-3">
+              <span className="text-ink-500 capitalize">{axis.axis}</span>
+              <span className="text-ink-900">
+                {axis.score}/100 <span className="text-ink-400">· {axis.signal}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section aria-labelledby="prs-heading" className="rounded-xl border border-ink-200 bg-white">
         <div className="px-5 py-4 border-b border-ink-100 flex items-baseline justify-between">
@@ -71,7 +95,7 @@ export default async function RepoDrillDownPage({ params }: PageProps): Promise<
           ) : (
             <ul className="divide-y divide-ink-100">
               {pulls.map((pr) => (
-                <PrRow key={pr.number} pr={pr} />
+                <PrRow key={pr.number} pr={pr} slug={repo.slug} />
               ))}
             </ul>
           )}

@@ -1,7 +1,9 @@
+import Link from "next/link";
 import type { PullRequestSummary } from "@/lib/schemas/pr";
 
 type Props = {
   readonly pr: PullRequestSummary;
+  readonly slug: string;
 };
 
 function checkBadge(checks: PullRequestSummary["checks"]): JSX.Element {
@@ -42,22 +44,31 @@ function checkBadge(checks: PullRequestSummary["checks"]): JSX.Element {
   );
 }
 
-export function PrRow({ pr }: Props): JSX.Element {
+export function PrRow({ pr, slug }: Props): JSX.Element {
+  const slugPath = encodeURIComponent(slug);
   return (
     <li className="flex items-center justify-between gap-4 py-3">
       <div className="min-w-0">
-        <a
+        <Link
           className="block truncate text-sm font-medium text-ink-900 hover:underline"
-          href={pr.htmlUrl}
-          aria-label={`PR #${pr.number}: ${pr.title}`}
-          rel="noreferrer noopener"
-          target="_blank"
+          href={{ pathname: "/repos/[slug]/pulls/[number]", query: { slug, number: pr.number } }}
+          as={`/repos/${slugPath}/pulls/${pr.number}`}
+          aria-label={`Open drill-down for PR #${pr.number}: ${pr.title}`}
         >
           #{pr.number} · {pr.title}
-        </a>
+        </Link>
         <p className="text-xs text-ink-400 font-mono truncate">
           {pr.headRef} → {pr.baseRef} · @{pr.authorLogin}
-          {pr.isDraft ? " · draft" : ""}
+          {pr.isDraft ? " · draft" : ""} ·{" "}
+          <a
+            className="hover:underline"
+            href={pr.htmlUrl}
+            rel="noreferrer noopener"
+            target="_blank"
+            aria-label="Open on GitHub"
+          >
+            github
+          </a>
         </p>
       </div>
       <div className="shrink-0">{checkBadge(pr.checks)}</div>
