@@ -72,8 +72,34 @@ describe("PullRequestDetail", () => {
       mergeable: true,
       reviews: { approvals: 1, changesRequested: 0, pending: 0 },
       checkRuns: [],
+      branchProtectionEnabled: true,
       branchProtectionRequiresReviews: true,
+      branchProtectionRequiredApprovingReviewCount: 1,
       branchProtectionRequiredChecks: ["lint", "build"],
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it("accepts null branch-protection fields when signal is unavailable", () => {
+    const ok = PullRequestDetail.safeParse({
+      number: 8,
+      title: "feat: y",
+      authorLogin: "octocat",
+      isDraft: false,
+      state: "open",
+      htmlUrl: "https://github.com/r/r/pull/8",
+      headRef: "feat/y",
+      headSha: "def456",
+      baseRef: "main",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      mergeable: null,
+      reviews: { approvals: 0, changesRequested: 0, pending: 0 },
+      checkRuns: [],
+      branchProtectionEnabled: null,
+      branchProtectionRequiresReviews: null,
+      branchProtectionRequiredApprovingReviewCount: null,
+      branchProtectionRequiredChecks: [],
     });
     expect(ok.success).toBe(true);
   });

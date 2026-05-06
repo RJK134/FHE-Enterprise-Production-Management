@@ -5,7 +5,7 @@ import { BranchProtectionState } from "@/lib/schemas/branch-protection";
 import { RepoSlug } from "@/lib/schemas/repo";
 
 /**
- * Reads the branch-protection state for a repo's default-named branch.
+ * Reads the branch-protection state for a repo branch (defaults to `"main"`).
  *
  * Returns:
  *   - The parsed `BranchProtectionState` when the branch is protected.

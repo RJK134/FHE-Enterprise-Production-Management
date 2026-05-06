@@ -1,4 +1,5 @@
 import "server-only";
+import { RequestError } from "@octokit/request-error";
 import { isGithubConfigured } from "@/lib/env";
 import { getBranchProtection } from "@/lib/services/github/branch-protection";
 import { getRepoAlerts } from "@/lib/services/github/alerts";
@@ -11,9 +12,9 @@ import type { PortfolioRepo } from "@/lib/schemas/repo";
 
 /**
  * Axis weights from docs/checklists/enterprise-readiness-checklist.md.
- * Phase 1 derives the four axes that GitHub can answer authoritatively;
- * the remaining axes will be added when their signals arrive
- * (CI pass rate — Phase 1 P1; observability/UAT/perf — Phase 5+).
+ * Phase 1 derives 3 live axes from GitHub signals (governance, security,
+ * dependencies); documentation and operational remain registry estimates until
+ * their signals arrive (Phase 3 / Phase 5 respectively).
  */
 const AXIS_WEIGHT: Record<ReadinessAxis, number> = {
   security: 18,
@@ -203,6 +204,10 @@ async function safeBranchProtection(
     if (value === null) return { kind: "error", message: "no client" };
     return { kind: "ok", value };
   } catch (error) {
+    // Re-throw Octokit API errors (e.g. 403 wrong scopes, 429 rate-limit, 5xx)
+    // so operational misconfigurations surface rather than silently producing
+    // a registry-estimate fallback.
+    if (error instanceof RequestError) throw error;
     return {
       kind: "error",
       message: error instanceof Error ? error.message : "unknown error",
@@ -218,6 +223,9 @@ async function safeAlerts(
     if (value === null) return { kind: "error", message: "no client" };
     return { kind: "ok", value };
   } catch (error) {
+    // Re-throw Octokit API errors (e.g. 429 rate-limit, 5xx) so operational
+    // issues surface rather than silently producing registry-estimate fallbacks.
+    if (error instanceof RequestError) throw error;
     return {
       kind: "error",
       message: error instanceof Error ? error.message : "unknown error",

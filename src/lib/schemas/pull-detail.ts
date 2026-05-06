@@ -45,7 +45,9 @@ export const PullRequestDetail = z.object({
   mergeable: z.boolean().nullable(),
   reviews: ReviewSummary,
   checkRuns: z.array(CheckRunDetail),
+  branchProtectionEnabled: z.boolean().nullable(),
   branchProtectionRequiresReviews: z.boolean().nullable(),
+  branchProtectionRequiredApprovingReviewCount: z.number().int().nonnegative().nullable(),
   branchProtectionRequiredChecks: z.array(z.string()),
 });
 export type PullRequestDetail = z.infer<typeof PullRequestDetail>;

@@ -48,19 +48,29 @@ async function fetchReviewSummary(
 ): Promise<ReviewSummary> {
   const { data } = await gh.pulls.listReviews({ owner, repo, pull_number: pullNumber, per_page: 100 });
   const latestByUser = new Map<string, string>();
+  // Track reviewers who have an un-submitted (draft) review. These are counted
+  // as pending only when they have no subsequent submitted review on record.
+  const pendingUsers = new Set<string>();
   for (const r of data) {
     const user = r.user?.login;
     if (!user) continue;
-    if (r.state === "PENDING") continue;
+    if (r.state === "PENDING") {
+      pendingUsers.add(user);
+      continue;
+    }
     latestByUser.set(user, r.state ?? "COMMENTED");
   }
   let approvals = 0;
   let changesRequested = 0;
-  let pending = 0;
   for (const state of latestByUser.values()) {
     if (state === "APPROVED") approvals += 1;
     else if (state === "CHANGES_REQUESTED") changesRequested += 1;
-    else if (state === "PENDING") pending += 1;
+  }
+  // A reviewer is "pending" only if they have started a draft review but have
+  // not yet submitted any review for this PR.
+  let pending = 0;
+  for (const u of pendingUsers) {
+    if (!latestByUser.has(u)) pending += 1;
   }
   return ReviewSummary.parse({ approvals, changesRequested, pending });
 }
@@ -117,7 +127,11 @@ export async function getPullRequestDetail(
     mergeable: pr.mergeable ?? null,
     reviews,
     checkRuns,
+    branchProtectionEnabled: branchProtection ? branchProtection.enabled : null,
     branchProtectionRequiresReviews: branchProtection ? branchProtection.requiresPullRequest : null,
+    branchProtectionRequiredApprovingReviewCount: branchProtection
+      ? branchProtection.requiredApprovingReviewCount
+      : null,
     branchProtectionRequiredChecks: branchProtection?.requiredStatusChecks ?? [],
   });
 }
@@ -127,8 +141,15 @@ export async function getPullRequestDetail(
  *
  * "Ready" requires:
  *   - PR is open (not draft, not closed/merged).
- *   - All required status checks (per branch protection) are present and successful.
- *   - At least the configured number of approving reviews exist (default 1).
+ *   - All required status checks (per branch protection) are present and have
+ *     conclusion `success`. When no required checks are configured, failing
+ *     checks only block the merge on unprotected branches (or when the
+ *     branch-protection signal is unavailable).
+ *   - When branch protection requires PR reviews, the configured number of
+ *     approving reviews must be present (derived from
+ *     `branchProtectionRequiredApprovingReviewCount`, falling back to
+ *     `options.minApprovals ?? 1`). Approval enforcement is skipped entirely
+ *     when branch protection explicitly does not require PR reviews.
  *   - No reviewer has a standing CHANGES_REQUESTED.
  *   - Octokit reports `mergeable: true` (or unknown — we don't fail on null).
  */
@@ -137,7 +158,6 @@ export function evaluateMergeReadiness(
   options: { minApprovals?: number } = {},
 ): MergeReadiness {
   const reasons: string[] = [];
-  const minApprovals = Math.max(options.minApprovals ?? 1, 0);
 
   if (pr.isDraft) reasons.push("PR is a draft");
   if (pr.state !== "open") reasons.push(`PR is ${pr.state}`);
@@ -145,8 +165,16 @@ export function evaluateMergeReadiness(
   if (pr.reviews.changesRequested > 0) {
     reasons.push(`${pr.reviews.changesRequested} reviewer(s) requested changes`);
   }
-  if (pr.reviews.approvals < minApprovals) {
-    reasons.push(`${pr.reviews.approvals} of ${minApprovals} required approvals`);
+
+  // Only enforce approval count when branch protection explicitly requires PR
+  // reviews, or when the protection signal is unavailable (conservative default).
+  // When protection is present but does not require reviews, skip this check.
+  if (pr.branchProtectionRequiresReviews !== false) {
+    const required =
+      pr.branchProtectionRequiredApprovingReviewCount ?? options.minApprovals ?? 1;
+    if (pr.reviews.approvals < required) {
+      reasons.push(`${pr.reviews.approvals} of ${required} required approvals`);
+    }
   }
 
   const requiredChecks = new Set(pr.branchProtectionRequiredChecks);
@@ -157,13 +185,18 @@ export function evaluateMergeReadiness(
         successByName.set(c.name, false);
         continue;
       }
-      successByName.set(c.name, c.conclusion === "success" || c.conclusion === "neutral");
+      // Only `success` satisfies a required check; `neutral` is not sufficient.
+      successByName.set(c.name, c.conclusion === "success");
     }
     for (const name of requiredChecks) {
       if (!successByName.has(name)) reasons.push(`required check "${name}" missing`);
       else if (successByName.get(name) === false) reasons.push(`required check "${name}" not green`);
     }
-  } else {
+  } else if (pr.branchProtectionEnabled !== true) {
+    // Apply the "any failing check blocks" fallback only for branches that are
+    // confirmed unprotected (enabled === false) or where the branch-protection
+    // signal is unavailable (null). A protected branch with no required checks
+    // configured should not be blocked by incidental check failures.
     const failing = pr.checkRuns.filter(
       (c) =>
         c.status === "completed" &&

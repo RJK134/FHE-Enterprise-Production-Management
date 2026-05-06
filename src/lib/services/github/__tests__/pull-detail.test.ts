@@ -17,7 +17,9 @@ const BASE: PullRequestDetail = {
   mergeable: true,
   reviews: { approvals: 1, changesRequested: 0, pending: 0 },
   checkRuns: [],
+  branchProtectionEnabled: true,
   branchProtectionRequiresReviews: true,
+  branchProtectionRequiredApprovingReviewCount: 1,
   branchProtectionRequiredChecks: [],
 };
 
@@ -43,13 +45,40 @@ describe("evaluateMergeReadiness", () => {
     expect(r.reasons.some((x) => x.includes("requested changes"))).toBe(true);
   });
 
-  it("blocks when below the configured min approvals", () => {
+  it("blocks when below the configured min approvals (fallback when no BP count)", () => {
     const r = evaluateMergeReadiness(
-      { ...BASE, reviews: { approvals: 1, changesRequested: 0, pending: 0 } },
+      {
+        ...BASE,
+        branchProtectionRequiredApprovingReviewCount: null,
+        reviews: { approvals: 1, changesRequested: 0, pending: 0 },
+      },
       { minApprovals: 2 },
     );
     expect(r.ready).toBe(false);
     expect(r.reasons.some((x) => x.includes("of 2 required approvals"))).toBe(true);
+  });
+
+  it("uses branchProtectionRequiredApprovingReviewCount over minApprovals", () => {
+    const r = evaluateMergeReadiness(
+      {
+        ...BASE,
+        branchProtectionRequiredApprovingReviewCount: 2,
+        reviews: { approvals: 1, changesRequested: 0, pending: 0 },
+      },
+      { minApprovals: 1 },
+    );
+    expect(r.ready).toBe(false);
+    expect(r.reasons.some((x) => x.includes("of 2 required approvals"))).toBe(true);
+  });
+
+  it("skips approval enforcement when branch protection does not require reviews", () => {
+    const r = evaluateMergeReadiness({
+      ...BASE,
+      branchProtectionRequiresReviews: false,
+      branchProtectionRequiredApprovingReviewCount: 0,
+      reviews: { approvals: 0, changesRequested: 0, pending: 0 },
+    });
+    expect(r.ready).toBe(true);
   });
 
   it("blocks when a required check is missing", () => {
@@ -92,9 +121,33 @@ describe("evaluateMergeReadiness", () => {
     expect(r.reasons.some((x) => x.includes('"lint" not green'))).toBe(true);
   });
 
-  it("blocks on non-protected repos when any check fails", () => {
+  it("does not accept neutral as passing for a required check", () => {
     const r = evaluateMergeReadiness({
       ...BASE,
+      branchProtectionRequiredChecks: ["lint"],
+      checkRuns: [
+        {
+          id: 1,
+          name: "lint",
+          status: "completed",
+          conclusion: "neutral",
+          htmlUrl: null,
+          startedAt: null,
+          completedAt: null,
+        },
+      ],
+    });
+    expect(r.ready).toBe(false);
+    expect(r.reasons.some((x) => x.includes('"lint" not green'))).toBe(true);
+  });
+
+  it("blocks on unprotected repos when any check fails", () => {
+    const r = evaluateMergeReadiness({
+      ...BASE,
+      branchProtectionEnabled: false,
+      branchProtectionRequiresReviews: false,
+      branchProtectionRequiredApprovingReviewCount: 0,
+      branchProtectionRequiredChecks: [],
       checkRuns: [
         {
           id: 1,
@@ -109,6 +162,26 @@ describe("evaluateMergeReadiness", () => {
     });
     expect(r.ready).toBe(false);
     expect(r.reasons.some((x) => x.includes("check(s) failing"))).toBe(true);
+  });
+
+  it("does not block on failing checks when branch is protected with no required checks", () => {
+    const r = evaluateMergeReadiness({
+      ...BASE,
+      branchProtectionEnabled: true,
+      branchProtectionRequiredChecks: [],
+      checkRuns: [
+        {
+          id: 1,
+          name: "x",
+          status: "completed",
+          conclusion: "failure",
+          htmlUrl: null,
+          startedAt: null,
+          completedAt: null,
+        },
+      ],
+    });
+    expect(r.ready).toBe(true);
   });
 
   it("blocks when GitHub reports mergeable=false", () => {
