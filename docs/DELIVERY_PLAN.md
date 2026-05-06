@@ -59,21 +59,22 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 
 ---
 
-## Phase 1 — Live Control Tower MVP (Pending)
+## Phase 1 — Live Control Tower MVP (Active)
 
 **Objective:** Replace any simulated state with real GitHub-API-backed views.
 
 ### P0
-- [ ] Next.js 14 App Router skeleton with strict TS and Tailwind.
-- [ ] Server-side GitHub client with token management via secret store only.
-- [ ] Live PR list per repo with check status, BugBot/Copilot/Claude review state.
-- [ ] Portfolio Registry page reading from a typed config (no DB yet).
-- [ ] Live readiness score derived from real signals (branch protection, CodeQL, Dependabot alerts, CI pass rate).
+- [x] Next.js 14 App Router skeleton with strict TS and Tailwind. (PR #6)
+- [x] Server-side GitHub client with token management via secret store only. (PR #6)
+- [x] Live PR list per repo with check status. (PR #6) — BugBot/Copilot/Claude review-state attribution deferred to a small follow-up.
+- [x] Portfolio Registry page reading from a typed config (no DB yet). (PR #6)
+- [x] Live readiness score derived from real signals (branch protection, CodeQL alerts, Dependabot alerts). CI pass rate defers to Phase 5.
 
 ### P1
 - [ ] Per-repo blocker tracker with append-only history.
-- [ ] Per-PR drill-down with merge readiness signal.
+- [x] Per-PR drill-down with merge readiness signal. — landed in the readiness PR.
 - [ ] Authentication wall (placeholder auth — Phase 4 replaces with SSO).
+- [ ] BugBot/Copilot/Claude review-state attribution on PR rows.
 
 ### Exit criteria
 - Owner can see live PRs and check states across all four products without leaving FHE-EPMC.
