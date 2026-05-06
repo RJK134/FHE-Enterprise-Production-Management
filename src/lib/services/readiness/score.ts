@@ -11,9 +11,11 @@ import {
 import type { PortfolioRepo } from "@/lib/schemas/repo";
 
 /**
- * Axis weights from docs/checklists/enterprise-readiness-checklist.md.
- * Phase 1 derives 3 live axes from GitHub signals (governance, security,
- * dependencies); documentation and operational remain registry estimates until
+ * Phase 1 in this module derives three live GitHub-backed axes:
+ * governance, security, and dependencies. The documentation and
+ * operational axes currently fall back to the registry estimate until
+ * dedicated signals arrive. CI pass rate and other later signals
+ * (for example observability/UAT/perf) are planned for Phase 5+.
  * their signals arrive (Phase 3 / Phase 5 respectively).
  */
 const AXIS_WEIGHT: Record<ReadinessAxis, number> = {
