@@ -127,15 +127,48 @@ cd FHE-Enterprise-Production-Management
 # 2. Read CLAUDE.md before any Claude Code session
 cat CLAUDE.md
 
-# 3. Add a new repo to portfolio standards
+# 3. Install dependencies and run the dashboard locally
+npm install
+cp .env.example .env.local   # then fill in GITHUB_TOKEN etc.
+npm run dev                  # http://localhost:3000
+
+# 4. Run the canonical CI gate locally
+npm run lint && npm run typecheck && npm test && npm run build
+
+# 5. Apply FHE governance baseline to a portfolio repo
 ./scripts/setup-repo-standards.sh --repo RJK134/YOUR-REPO
 
-# 4. Deploy universal Cursor agent to a repo
-./scripts/deploy-cursor-agent.sh --repo RJK134/YOUR-REPO
-
-# 5. Set up Review Intelligence (labels, milestones, epics)
+# 6. Set up Review Intelligence (labels, milestones, epics)
 ./scripts/setup-review-intelligence.sh --repo RJK134/YOUR-REPO
 ```
+
+---
+
+## Dashboard (Phase 1 Live Control Tower MVP)
+
+The Next.js 14/15 App Router dashboard ships in `src/`:
+
+- `/` — portfolio overview with **live readiness signals** (CodeQL, Dependabot, branch protection) when `GITHUB_TOKEN` is configured; falls back to the registry estimate otherwise.
+- `/repos/[slug]` — per-repo drill-down: readiness axis breakdown + open PR list with check status.
+- `/repos/[slug]/pulls/[number]` — per-PR drill-down: merge-readiness verdict, full check-run list, review summary, branch-protection requirements.
+
+All GitHub calls are **server-side only**; no token is exposed to the browser. The `server-only` import marker is on every service module. Per-repo drill-downs and PR drill-downs are gated by the `PORTFOLIO_ALLOWLIST` env var.
+
+### Environment variables
+
+| Variable | Purpose | Required? |
+|---|---|---|
+| `GITHUB_TOKEN` | Server-side PAT or App-installation token. Scopes: `Pull requests: read`, `Checks: read`, `Contents: read`, `Administration: read` (for branch protection), `Dependabot alerts: read`, `Code scanning alerts: read`, `Metadata: read`. | Strongly recommended (without it, all signals fall back to registry estimate). |
+| `GITHUB_API_URL` | Override for GitHub Enterprise Server. | Optional. |
+| `PORTFOLIO_ALLOWLIST` | Comma-separated `owner/name` list permitted to drill down into. | Required to enable drill-downs. |
+| `DASHBOARD_BASIC_AUTH_USER` / `DASHBOARD_BASIC_AUTH_PASS` | HTTP Basic Auth gate (Phase 1 placeholder; SSO replaces in Phase 4). | Required in production. |
+| `DASHBOARD_AUTH_DISABLED` | Set to `1` only for local dev to bypass the auth wall. | Optional. |
+
+See `.env.example` for the canonical template.
+
+### Deploying
+
+Deployment is on **Vercel for GitHub** per `docs/process/vercel-integration.md`. Phase-0-aware `scripts/vercel-ignore.sh` skips builds when there is no Next.js app present, when the diff is docs-only, or in early branch states; otherwise builds proceed normally. Branch protection on `main` and the GitHub Environment `production` manual approval gate every release.
 
 ---
 

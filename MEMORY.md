@@ -7,9 +7,9 @@
 
 ## Active Context
 
-**Last Updated**: 2026-05-04
-**Current Phase**: Phase 1 — Live Control Tower MVP
-**Sprint Focus**: Closing Phase 1 P0 (live readiness score) + opening Phase 1 P1 (per-PR drill-down with merge readiness)
+**Last Updated**: 2026-05-06
+**Current Phase**: Phase 1 — Live Control Tower MVP (active; Phase 0 closed)
+**Sprint Focus**: Closing Phase 0 trail (CodeQL, plan refresh) + landing the Phase 1 P1 placeholder auth wall. Remaining Phase 1 P1: per-repo blocker tracker, BugBot/Copilot/Claude review-state attribution.
 **Owner**: Freddie Finn (RJK134 / Future Horizons Education)
 **Primary Contact Repo**: https://github.com/RJK134/FHE-Enterprise-Production-Management
 
@@ -32,7 +32,7 @@ FHE-EPMC evolved from the **Perplexity Computer Production Delivery Command Cent
 | SJMS 2.5 | RJK134/SJMS-2.5 | 72/100 | Branch protection gaps, plaintext webhook/session secrets, no transactional outbox/DLQ | Tranche A (P0) |
 | EquiSmile | RJK134/EquiSmile | 63/100 | Multi-tenancy, identity gaps, CI/DB, dependency gaps | Phase 17 Stabilise |
 | HERM Platform | RJK134/herm-platform | 70/100 | SSO/MFA, revocable sessions, Stripe webhook completeness, observability | Phase 1 Close open hardening PRs |
-| FHE-EPMC | RJK134/FHE-Enterprise-Production-Management | Foundation | Secrets not yet configured, no CI, no dashboard app yet | Phase 0 |
+| FHE-EPMC | RJK134/FHE-Enterprise-Production-Management | Live signals | EPMC-B5 (GitHub Environments), EPMC-B6 (FHE org access), EPMC-B7 (portfolio onboarding pending) | Phase 1 — Live Control Tower MVP |
 
 ---
 
@@ -81,6 +81,40 @@ The SJMS-2.5 Cursor Agent pattern is the proven foundation for all repos:
   6. Phase 1 kickoff: scaffold the Next.js 14 dashboard with the typed GitHub service layer per `docs/ARCHITECTURE.md`.
   7. Run `scripts/setup-repo-standards.sh --repo RJK134/SJMS-2.5` (and EquiSmile, herm-platform) once owner approves.
   8. Resolve FutureHorizonsEducation org access for full portfolio coverage.
+
+### 2026-05-06 — Phase 0 closure + Phase 1 P1 placeholder auth wall
+- **Objective**: Bring the plan in line with reality (Phase 0 → Complete; Phase 1 → Active; resolved blockers ticked), close the last Phase 0 P2 gap (CodeQL workflow), update README to reflect the live dashboard, and land the Phase 1 P1 placeholder authentication wall before Phase 4 SSO arrives.
+- **Branch**: `claude/fhe-epmc-phase-1-closure`.
+- **Files added**:
+  - `.github/workflows/codeql.yml` — JavaScript/TypeScript CodeQL with `security-and-quality` query suite, weekly cron + per-PR + per-push triggers.
+  - `src/lib/auth.ts` — pure `evaluateBasicAuth(header, expected)` with constant-time compare, UTF-8 base64 decoder, comprehensive reason strings.
+  - `src/middleware.ts` — Next.js Edge middleware. Fail-closed when credentials are unset (HTTP 503); WWW-Authenticate Basic challenge on missing/wrong creds; bypass via `DASHBOARD_AUTH_DISABLED=1` for local dev only. Matcher excludes Next internals + favicon.
+  - `src/lib/__tests__/auth.test.ts` — 12 tests including UTF-8 username/password, password containing `:`, malformed headers, length-mismatch constant-time smoke test.
+- **Files updated**:
+  - `docs/DELIVERY_PLAN.md` — Phasing Summary (Phase 0 Complete, Phase 1 Active); Phase 0 P0/P1/P2 ticked; Phase 1 P0 ticked; auth wall ticked under Phase 1 P1; Active Blockers table refreshed (B1..B4 resolved with Owner-confirmed evidence; B5/B6/B7/B8 carried as Open/Deferred with explicit status column).
+  - `MEMORY.md` — Active Context advanced to 2026-05-06; Sprint Focus updated; Portfolio Snapshot row for FHE-EPMC updated.
+  - `README.md` — Quick Start expanded (npm install, dev server, env template); new "Dashboard" section enumerating routes, env-var table, and Vercel deploy posture.
+  - `src/lib/env.ts` — `EnvSchema` extended with `DASHBOARD_BASIC_AUTH_USER` / `DASHBOARD_BASIC_AUTH_PASS` / `DASHBOARD_AUTH_DISABLED`; values plumbed through.
+  - `.env.example` — three new auth env vars documented with safe-default guidance.
+  - `scripts/verify-foundation.{sh,ps1}` — `codeql.yml` added to required files list.
+- **Local verification (Node 22)**:
+  - `npm run lint` — PASS.
+  - `npm run typecheck` — PASS (strict + `noUncheckedIndexedAccess`).
+  - `npm test` — PASS (73/73 across 10 suites; +12 from PR #7's 56).
+  - `npm run build` — PASS; middleware compiled to 34.6 kB; 4 routes; 102 kB shared chunks.
+  - `bash scripts/verify-foundation.sh` — PASS.
+- **Governance**:
+  - No new dependencies. No CI workflow file changes that affect required checks (codeql.yml is additive). No schema migrations / auth/RBAC business logic / payments / external integrations / secret handling beyond env-var addition.
+  - `requires-human-review` requested per CLAUDE.md (>5 files).
+  - Auth posture is fail-closed by default; the only way to bypass is the explicit `DASHBOARD_AUTH_DISABLED=1` env var, intended for local dev. Documented prominently in README and `.env.example`.
+- **Owner manual steps after merge** (cannot be automated):
+  1. Set `DASHBOARD_BASIC_AUTH_USER` and `DASHBOARD_BASIC_AUTH_PASS` in Vercel preview + production environments (not in git, not in `.env.example`).
+  2. Optionally add the new `CodeQL` checks to required status checks once two consecutive runs are green.
+  3. Item 5 (portfolio onboarding) and EPMC-B5 (GitHub Environments) remain owner actions.
+- **Next Steps**:
+  1. Per-repo blocker tracker (Phase 1 P1, last item).
+  2. BugBot/Copilot/Claude review-state attribution on PR rows (Phase 1 P0 cleanup).
+  3. Phase 2 P0 kick-off — Plan Refresh Engine first (ironically replacing this hand-edit), then Claude Code Bridge handoff-pack generator.
 
 ### 2026-05-04 — Phase 1 Live Control Tower MVP — readiness signals + per-PR drill-down
 - **Objective**: Close Phase 1 P0 by deriving the readiness score from real signals, and open Phase 1 P1 by adding the per-PR drill-down with merge-readiness signal.
