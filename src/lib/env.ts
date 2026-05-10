@@ -29,6 +29,14 @@ const EnvSchema = z.object({
   GITHUB_TOKEN: z.string().min(1).optional(),
   GITHUB_API_URL: z.string().url().optional(),
   PORTFOLIO_ALLOWLIST: PortfolioAllowlistSchema,
+  // Phase 1 placeholder auth — replaced by SSO in Phase 4.
+  // Middleware reads these from process.env directly so the gate runs in the
+  // Edge runtime without pulling in the Zod validator. The fields are also
+  // present here for documentation, type safety in service modules, and to
+  // surface invalid values fast at boot.
+  DASHBOARD_BASIC_AUTH_USER: z.string().min(1).optional(),
+  DASHBOARD_BASIC_AUTH_PASS: z.string().min(1).optional(),
+  DASHBOARD_AUTH_DISABLED: z.enum(["0", "1"]).optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -47,6 +55,9 @@ export function env(): Env {
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     GITHUB_API_URL: process.env.GITHUB_API_URL,
     PORTFOLIO_ALLOWLIST: process.env.PORTFOLIO_ALLOWLIST,
+    DASHBOARD_BASIC_AUTH_USER: process.env.DASHBOARD_BASIC_AUTH_USER,
+    DASHBOARD_BASIC_AUTH_PASS: process.env.DASHBOARD_BASIC_AUTH_PASS,
+    DASHBOARD_AUTH_DISABLED: process.env.DASHBOARD_AUTH_DISABLED,
   });
   if (!parsed.success) {
     throw new Error(

@@ -1,8 +1,8 @@
 # FHE-EPMC Delivery Plan
 
 > **Document owner:** Freddie Finn (RJK134)
-> **Status:** Phase 0 active
-> **Last updated:** 2026-05-01
+> **Status:** Phase 1 active
+> **Last updated:** 2026-05-06
 > **Companion document:** `docs/PRODUCT_SPECIFICATION.md`
 
 This is the canonical phased delivery roadmap for the FHE Enterprise Production Management Centre. Plan refreshes are produced via PR per Step 12 of the universal lifecycle and approved by the owner.
@@ -13,8 +13,8 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 
 | Phase | Name | Outcome | Status |
 |-------|------|---------|--------|
-| 0 | Foundation | Repo hardened, governance docs canonical, agents wired, CI green | **Active** |
-| 1 | Live Control Tower MVP | Real GitHub PR/CI polling, dashboard skeleton, portfolio registry live | Pending |
+| 0 | Foundation | Repo hardened, governance docs canonical, agents wired, CI green | **Complete** |
+| 1 | Live Control Tower MVP | Real GitHub PR/CI polling, dashboard skeleton, portfolio registry live | **Active** |
 | 2 | Agent Bridge & Plan Engine | Claude Code Bridge, plan refresh engine, prompt library | Pending |
 | 3 | Evidence Lake & Governance Ledger | Evidence ingest, immutable ledger, audit log MVP | Pending |
 | 4 | RBAC, SSO, UAT Portal | Identity, role-based access, stakeholder UAT portal | Pending |
@@ -24,38 +24,39 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 
 ---
 
-## Phase 0 — Foundation (Active)
+## Phase 0 — Foundation (Complete)
 
 **Objective:** Stand up the FHE-EPMC repo so it can host every subsequent phase safely.
 
 ### P0 — Must complete this phase
 - [x] `README.md`, `CLAUDE.md`, `MEMORY.md`, `SKILLS.md` committed.
-- [ ] `docs/PRODUCT_SPECIFICATION.md` canonical version committed.
-- [ ] `docs/DELIVERY_PLAN.md` (this file) committed.
-- [ ] `docs/ARCHITECTURE.md`, `docs/INTEGRATION_MAP.md`, `docs/PROMPTS_LIBRARY.md` committed.
-- [ ] `docs/process/` and `docs/checklists/` populated.
-- [ ] `.github/ISSUE_TEMPLATE/` populated with structured forms (epic, feature, bug, planning, cursor-agent-task, blocker-remediation).
-- [ ] `.github/PULL_REQUEST_TEMPLATE/` and root `pull_request_template.md` committed.
-- [ ] `.github/workflows/` (`ci.yml`, `claude.yml`, `claude-auto-review.yml`, `cursor-agent-manual.yml`, `repo-intelligence-scan.yml`) committed.
-- [ ] `.cursor/` agent persona, rules, environment committed.
-- [ ] `scripts/` (PowerShell + bash) for repo standards, review intelligence, foundation verification.
-- [ ] CI green on the foundation PR.
-- [ ] Foundation PR opened and ready for human approval.
+- [x] `docs/PRODUCT_SPECIFICATION.md` canonical version committed.
+- [x] `docs/DELIVERY_PLAN.md` (this file) committed.
+- [x] `docs/ARCHITECTURE.md`, `docs/INTEGRATION_MAP.md`, `docs/PROMPTS_LIBRARY.md` committed.
+- [x] `docs/process/` and `docs/checklists/` populated.
+- [x] `.github/ISSUE_TEMPLATE/` populated with structured forms (epic, feature, bug, planning, cursor-agent-task, blocker-remediation).
+- [x] `.github/PULL_REQUEST_TEMPLATE/` and root `pull_request_template.md` committed.
+- [x] `.github/workflows/` (`ci.yml`, `claude.yml`, `claude-auto-review.yml`, `cursor-agent-manual.yml`, `repo-intelligence-scan.yml`) committed.
+- [x] `.cursor/` agent persona, rules, environment committed.
+- [x] `scripts/` (PowerShell + bash) for repo standards, review intelligence, foundation verification.
+- [x] CI green on the foundation PR.
+- [x] Foundation PR opened, reviewed by Copilot, hardened, and merged with human approval (PR #5).
 
 ### P1 — Should complete this phase
-- [ ] Branch protection rule on `main` enabled requiring PR, ≥ 1 review, CI pass.
-- [ ] `ANTHROPIC_API_KEY` and `CURSOR_API_KEY` secrets configured.
-- [ ] Claude Code GitHub App and Cursor GitHub App installed.
-- [ ] Dependabot config committed and active.
+- [x] Branch protection rule on `main` enabled requiring PR, ≥ 1 review, CI pass. (Owner-confirmed.)
+- [x] `ANTHROPIC_API_KEY` and `CURSOR_API_KEY` secrets configured. (Owner-confirmed.)
+- [x] Claude Code GitHub App and Cursor GitHub App installed. (Owner-confirmed.)
+- [x] Dependabot config committed and active — three Dependabot PRs already merged (#2, #3, #4).
+- [x] Vercel for GitHub installed and project wired. Runbook in `docs/process/vercel-integration.md`.
 
 ### P2 — Nice to complete this phase
-- [ ] CodeQL workflow scaffolded.
-- [ ] GitHub Environments (`development`, `staging`, `production`) created.
-- [ ] Auto-merge enabled on the repo, gated on required checks + approval.
+- [x] CodeQL workflow scaffolded — landed in this plan-refresh PR.
+- [ ] GitHub Environments (`development`, `staging`, `production`) created. — Owner action; status not visible from this dashboard yet.
+- [x] Auto-merge enabled on the repo, gated on required checks + approval.
 
 ### Exit criteria
-- Foundation PR merged via human approval with all required checks green.
-- `MEMORY.md` updated to point Phase 1 at the Control Tower MVP.
+- [x] Foundation PR merged via human approval with all required checks green.
+- [x] `MEMORY.md` updated to point Phase 1 at the Control Tower MVP.
 
 ---
 
@@ -64,17 +65,17 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 **Objective:** Replace any simulated state with real GitHub-API-backed views.
 
 ### P0
-- [x] Next.js 14 App Router skeleton with strict TS and Tailwind. (PR #6)
-- [x] Server-side GitHub client with token management via secret store only. (PR #6)
-- [x] Live PR list per repo with check status. (PR #6) — BugBot/Copilot/Claude review-state attribution deferred to a small follow-up.
-- [x] Portfolio Registry page reading from a typed config (no DB yet). (PR #6)
-- [x] Live readiness score derived from real signals (branch protection, CodeQL alerts, Dependabot alerts). CI pass rate defers to Phase 5.
+- [x] Next.js 14/15 App Router skeleton with strict TS and Tailwind. (PR #6, on Next 15.5.15.)
+- [x] Server-side GitHub client with token management via secret store only. (PR #6.)
+- [x] Live PR list per repo with check status. (PR #6.) — BugBot/Copilot/Claude review-state attribution still deferred to a small follow-up.
+- [x] Portfolio Registry page reading from a typed config (no DB yet). (PR #6.)
+- [x] Live readiness score derived from real signals (branch protection, CodeQL alerts, Dependabot alerts). (PR #7.) CI pass rate defers to Phase 5 by design.
 
 ### P1
-- [ ] Per-repo blocker tracker with append-only history.
-- [x] Per-PR drill-down with merge readiness signal. — landed in the readiness PR.
-- [ ] Authentication wall (placeholder auth — Phase 4 replaces with SSO).
-- [ ] BugBot/Copilot/Claude review-state attribution on PR rows.
+- [ ] Per-repo blocker tracker with append-only history. — Next session.
+- [x] Per-PR drill-down with merge readiness signal. (PR #7.)
+- [x] Authentication wall (placeholder auth — Phase 4 replaces with SSO). — landed in this plan-refresh PR (HTTP Basic Auth via env).
+- [ ] BugBot/Copilot/Claude review-state attribution on PR rows. — Next session.
 
 ### Exit criteria
 - Owner can see live PRs and check states across all four products without leaving FHE-EPMC.
@@ -180,14 +181,16 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 
 ## Active Blockers (Cross-Cutting)
 
-| ID | Blocker | Owner | Phase | ETA | Evidence |
-|----|---------|-------|-------|-----|----------|
-| EPMC-B1 | Repo secrets (`ANTHROPIC_API_KEY`, `CURSOR_API_KEY`) not configured | Owner | 0 | This week | n/a (manual GitHub settings action) |
-| EPMC-B2 | Branch protection on `main` not enabled | Owner | 0 | This week | n/a (manual GitHub settings action) |
-| EPMC-B3 | Claude Code GitHub App not installed | Owner | 0 | This week | n/a |
-| EPMC-B4 | Cursor GitHub App / BugBot not installed | Owner | 0 | This week | n/a |
-| EPMC-B5 | GitHub Environments (`development`, `staging`, `production`) not created | Owner | 0–1 | Phase 1 | n/a |
-| EPMC-B6 | FutureHorizonsEducation org access constraint | Owner | 1 | Phase 1 | Org admin action |
+| ID | Blocker | Owner | Phase | ETA | Status | Evidence |
+|----|---------|-------|-------|-----|--------|----------|
+| EPMC-B1 | Repo secrets (`ANTHROPIC_API_KEY`, `CURSOR_API_KEY`) not configured | Owner | 0 | — | ✅ Resolved | Owner-confirmed in session log 2026-05-04 |
+| EPMC-B2 | Branch protection on `main` not enabled | Owner | 0 | — | ✅ Resolved | Owner-confirmed; PR #5/#6/#7 merged via PR-gated flow |
+| EPMC-B3 | Claude Code GitHub App not installed | Owner | 0 | — | ✅ Resolved | Owner-confirmed |
+| EPMC-B4 | Cursor GitHub App / BugBot not installed | Owner | 0 | — | ✅ Resolved | Owner-confirmed |
+| EPMC-B5 | GitHub Environments (`development`, `staging`, `production`) not created | Owner | 0–1 | Phase 1 exit | ⚠️ Open | n/a |
+| EPMC-B6 | FutureHorizonsEducation org access constraint | Owner | 1 | Phase 1 exit | ⚠️ Open | Org admin action |
+| EPMC-B7 | Portfolio onboarding not run for SJMS-2.5 / EquiSmile / herm-platform | Owner | 1 | Phase 1 exit | ⚠️ Open | Cannot be done from FHE-EPMC session — MCP scope restricted to this repo only. Run `scripts/setup-repo-standards.sh --repo …` per repo from owner machine. |
+| EPMC-B8 | `documentation` and `operational` readiness axes are still registry-estimate | Engineering | 3, 5 | When Evidence Lake + CI pass-rate signals land | ⚠️ Deferred | Documented in `docs/checklists/enterprise-readiness-checklist.md` |
 
 ---
 

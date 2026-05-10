@@ -45,6 +45,7 @@ $Required = @(
   ".github/workflows/claude-auto-review.yml",
   ".github/workflows/cursor-agent-manual.yml",
   ".github/workflows/repo-intelligence-scan.yml",
+  ".github/workflows/codeql.yml",
   ".github/dependabot.yml",
 
   ".cursor/agents/FHE-Agent.md",
