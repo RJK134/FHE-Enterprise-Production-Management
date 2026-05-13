@@ -2,10 +2,17 @@ import Link from "next/link";
 import type { PortfolioRepo } from "@/lib/schemas/repo";
 import type { ReadinessSnapshot } from "@/lib/schemas/readiness";
 import { ReadinessBadge } from "@/components/readiness-badge";
+import { BlockerSummaryBadge } from "@/components/blocker-summary-badge";
 
 type Props = {
   readonly repo: PortfolioRepo;
   readonly readiness?: ReadinessSnapshot;
+  readonly blockerCounts?: {
+    readonly total: number;
+    readonly P0: number;
+    readonly P1: number;
+    readonly P2: number;
+  };
 };
 
 /**
@@ -14,7 +21,7 @@ type Props = {
  * provided it renders the live snapshot badge; otherwise falls back to the
  * registry estimate.
  */
-export function PortfolioCard({ repo, readiness }: Props): JSX.Element {
+export function PortfolioCard({ repo, readiness, blockerCounts }: Props): JSX.Element {
   const slugPath = encodeURIComponent(repo.slug);
   return (
     <article
@@ -26,26 +33,29 @@ export function PortfolioCard({ repo, readiness }: Props): JSX.Element {
           <h3 className="text-base font-semibold text-ink-900">{repo.displayName}</h3>
           <p className="text-xs text-ink-400 font-mono">{repo.slug}</p>
         </div>
-        {readiness ? (
-          <ReadinessBadge snapshot={readiness} />
-        ) : (
-          <ReadinessBadge
-            snapshot={{
-              slug: repo.slug,
-              total: repo.readinessEstimate,
-              axes: [
-                {
-                  axis: "governance",
-                  score: repo.readinessEstimate,
-                  weight: 100,
-                  signal: "registry estimate",
-                },
-              ],
-              computedAt: new Date(0).toISOString(),
-              source: "registry-estimate",
-            }}
-          />
-        )}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {readiness ? (
+            <ReadinessBadge snapshot={readiness} />
+          ) : (
+            <ReadinessBadge
+              snapshot={{
+                slug: repo.slug,
+                total: repo.readinessEstimate,
+                axes: [
+                  {
+                    axis: "governance",
+                    score: repo.readinessEstimate,
+                    weight: 100,
+                    signal: "registry estimate",
+                  },
+                ],
+                computedAt: new Date(0).toISOString(),
+                source: "registry-estimate",
+              }}
+            />
+          )}
+          {blockerCounts !== undefined ? <BlockerSummaryBadge counts={blockerCounts} /> : null}
+        </div>
       </header>
       <p className="mt-3 text-sm text-ink-700">{repo.description}</p>
       <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">

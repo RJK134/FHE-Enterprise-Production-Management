@@ -1,6 +1,7 @@
 import { isGithubConfigured, env } from "@/lib/env";
 import { listPortfolio } from "@/lib/services/portfolio/registry";
 import { computeReadiness } from "@/lib/services/readiness/score";
+import { countActiveBlockers } from "@/lib/services/blockers/registry";
 import type { ReadinessSnapshot } from "@/lib/schemas/readiness";
 import { PortfolioCard } from "@/components/portfolio-card";
 import { ConnectionBanner } from "@/components/connection-banner";
@@ -41,11 +42,13 @@ export default async function PortfolioPage(): Promise<JSX.Element> {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {portfolio.map((repo) => {
           const r = readinessByRepo.get(repo.slug);
+          const counts = countActiveBlockers(repo.slug);
           return (
             <PortfolioCard
               key={repo.slug}
               repo={repo}
               {...(r !== undefined ? { readiness: r } : {})}
+              blockerCounts={counts}
             />
           );
         })}

@@ -1,14 +1,16 @@
 import "server-only";
 import { RequestError } from "@octokit/request-error";
 import { getGithubClient } from "./client";
-import { PullRequestSummary, type PrCheckSummary } from "@/lib/schemas/pr";
+import { PullRequestSummary, type PrCheckSummary, type PrBotStates } from "@/lib/schemas/pr";
 import { RepoSlug } from "@/lib/schemas/repo";
+import { summariseChecksBySource } from "./check-classification";
 
 type PullsListItem = Awaited<ReturnType<Octokit["pulls"]["list"]>>["data"][number];
 
 import type { Octokit } from "@octokit/rest";
 
 type CheckRun = {
+  name: string;
   status: "queued" | "in_progress" | "completed" | string;
   conclusion: string | null;
 };
@@ -77,6 +79,7 @@ export async function listOpenPullRequests(
     (pulls as ReadonlyArray<PullsListItem>).map(async (pr) => {
       const headSha = pr.head?.sha;
       let checkSummary: PrCheckSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
+      let botStates: PrBotStates = {};
       if (typeof headSha === "string" && headSha.length > 0) {
         try {
           const { data } = await gh.checks.listForRef({
@@ -85,7 +88,9 @@ export async function listOpenPullRequests(
             ref: headSha,
             per_page: 100,
           });
-          checkSummary = summariseChecks(data.check_runs ?? []);
+          const runs = data.check_runs ?? [];
+          checkSummary = summariseChecks(runs);
+          botStates = summariseChecksBySource(runs);
         } catch (error: unknown) {
           // 404 — checks API not available for this ref/repo (e.g. the repo has
           //        never had a check run, or the ref is a fork without access).
@@ -93,6 +98,7 @@ export async function listOpenPullRequests(
           // Both are expected "no signal" conditions: degrade silently.
           if (error instanceof RequestError && (error.status === 404 || error.status === 422)) {
             checkSummary = { total: 0, success: 0, failure: 0, pending: 0, neutral: 0 };
+            botStates = {};
           } else {
             // Any other failure (403 insufficient scope, 429 rate-limited, 5xx, …)
             // is an operational problem that must not be silently masked.
@@ -113,6 +119,7 @@ export async function listOpenPullRequests(
         createdAt: pr.created_at,
         updatedAt: pr.updated_at,
         checks: checkSummary,
+        bots: botStates,
       });
 
       return parsed.success ? parsed.data : null;

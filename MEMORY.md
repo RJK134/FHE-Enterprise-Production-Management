@@ -7,9 +7,9 @@
 
 ## Active Context
 
-**Last Updated**: 2026-05-06
-**Current Phase**: Phase 1 — Live Control Tower MVP (active; Phase 0 closed)
-**Sprint Focus**: Closing Phase 0 trail (CodeQL, plan refresh) + landing the Phase 1 P1 placeholder auth wall. Remaining Phase 1 P1: per-repo blocker tracker, BugBot/Copilot/Claude review-state attribution.
+**Last Updated**: 2026-05-10
+**Current Phase**: Phase 1 — Live Control Tower MVP — **all line items delivered**; Phase 2 kick-off pending.
+**Sprint Focus**: Wrapping Phase 1 (blocker tracker + review-state attribution) before starting Phase 2 P0 (Plan Refresh Engine, Claude Code Bridge).
 **Owner**: Freddie Finn (RJK134 / Future Horizons Education)
 **Primary Contact Repo**: https://github.com/RJK134/FHE-Enterprise-Production-Management
 
@@ -81,6 +81,37 @@ The SJMS-2.5 Cursor Agent pattern is the proven foundation for all repos:
   6. Phase 1 kickoff: scaffold the Next.js 14 dashboard with the typed GitHub service layer per `docs/ARCHITECTURE.md`.
   7. Run `scripts/setup-repo-standards.sh --repo RJK134/SJMS-2.5` (and EquiSmile, herm-platform) once owner approves.
   8. Resolve FutureHorizonsEducation org access for full portfolio coverage.
+
+### 2026-05-10 — Phase 1 wrap-up — blocker tracker + review-state attribution
+- **Objective**: Finish the two remaining Phase 1 items (per-repo blocker tracker, BugBot/Copilot/Claude review-state attribution) so Phase 2 can start cleanly.
+- **Branch**: `claude/fhe-epmc-phase-1-wrapup`.
+- **Files added — blocker tracker**:
+  - `src/lib/schemas/blocker.ts` — `Blocker` schema (id, slug, severity, status, owner, openedAt, resolvedAt, etaAt, description, evidence, remediationPr).
+  - `src/lib/services/blockers/registry.ts` — typed append-only registry. Seeded with the eight EPMC blockers (B1..B8) plus seven portfolio blockers across SJMS-2.5, EquiSmile, herm-platform. Phase 3 moves it to the Evidence Lake DB with the same schema.
+  - `src/app/repos/[slug]/blockers/page.tsx` — drill-down route. Allowlist-gated. Three sections: Active, Deferred, Resolved. Sorted by status → severity → openedAt.
+  - `src/components/blocker-card.tsx`, `src/components/blocker-summary-badge.tsx`.
+- **Files added — review-state attribution**:
+  - `src/lib/services/github/check-classification.ts` — pure `classifyCheckRun(name)` mapping check-run names to `claude | bugbot | copilot | codeql | dependabot | vercel | gitguardian | ci | other`; `summariseChecksBySource(runs)` aggregates with worst-state-wins.
+  - `src/components/bot-states-strip.tsx` — compact strip showing per-source state on PR rows.
+- **Files updated**:
+  - `src/lib/schemas/pr.ts` — `PullRequestSummary.bots` added (defaults to `{}` for backwards compat).
+  - `src/lib/services/github/pulls.ts` — computes both `checks` summary and `bots` map from check-runs in one pass.
+  - `src/components/pr-row.tsx` — renders bot strip below the title.
+  - `src/components/portfolio-card.tsx` — optional `blockerCounts` prop; renders summary badge.
+  - `src/app/page.tsx` — `countActiveBlockers` per repo, passed to card.
+  - `src/app/repos/[slug]/page.tsx` — readiness + blocker badges side by side; blocker badge links to the new drill-down.
+- **Tests** — 3 new suites:
+  - `src/lib/schemas/__tests__/blocker.test.ts` — schema acceptance/rejection.
+  - `src/lib/services/blockers/__tests__/registry.test.ts` — non-empty per repo, active-count semantics, resolved/deferred exclusion.
+  - `src/lib/services/github/__tests__/check-classification.test.ts` — 22 classifier cases + 4 aggregation cases.
+- **Total tests**: 111/111 passing.
+- **Build**: 5 routes (`/`, `/_not-found`, `/repos/[slug]`, `/repos/[slug]/blockers`, `/repos/[slug]/pulls/[number]`); middleware 34.6 kB; 102 kB shared chunks.
+- **Local verification**: lint ✓ · typecheck ✓ · test 111/111 ✓ · build ✓ · `bash scripts/verify-foundation.sh` ✓.
+- **Governance**: No new dependencies. No CI workflow changes. No schema migrations / auth-business-logic / payments / external integrations / secret-handling. `requires-human-review` per CLAUDE.md (>5 files).
+- **Next Steps**:
+  1. Owner: review and merge this PR.
+  2. Triage the 10 open Dependabot npm PRs (#10..#19): safe patches (#11 autoprefixer, #16 postcss) can merge after CI; risky majors (TS 6, Tailwind 4, Zod 4, eslint-config-next 16, Octokit 22) need careful per-PR review.
+  3. Phase 2 P0 kick-off — Plan Refresh Engine (programmatic `DELIVERY_PLAN.md` diff PR), then Claude Code Bridge (handoff-pack generator + MEMORY.md drift detector).
 
 ### 2026-05-06 — Phase 0 closure + Phase 1 P1 placeholder auth wall
 - **Objective**: Bring the plan in line with reality (Phase 0 → Complete; Phase 1 → Active; resolved blockers ticked), close the last Phase 0 P2 gap (CodeQL workflow), update README to reflect the live dashboard, and land the Phase 1 P1 placeholder authentication wall before Phase 4 SSO arrives.
