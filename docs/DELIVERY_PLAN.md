@@ -67,15 +67,17 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 ### P0
 - [x] Next.js 14/15 App Router skeleton with strict TS and Tailwind. (PR #6, on Next 15.5.15.)
 - [x] Server-side GitHub client with token management via secret store only. (PR #6.)
-- [x] Live PR list per repo with check status. (PR #6.) — BugBot/Copilot/Claude review-state attribution still deferred to a small follow-up.
+- [x] Live PR list per repo with check status. (PR #6.) — BugBot/Copilot/Claude review-state attribution landed in the Phase 1 wrap-up PR.
 - [x] Portfolio Registry page reading from a typed config (no DB yet). (PR #6.)
 - [x] Live readiness score derived from real signals (branch protection, CodeQL alerts, Dependabot alerts). (PR #7.) CI pass rate defers to Phase 5 by design.
 
+**Phase 1 exit criteria are met.** Pending owner actions (EPMC-B5, EPMC-B7) remain in the blocker tracker but do not block Phase 2 work from starting.
+
 ### P1
-- [ ] Per-repo blocker tracker with append-only history. — Next session.
+- [x] Per-repo blocker tracker with append-only history. — landed in the Phase 1 wrap-up PR (`/repos/[slug]/blockers`, typed registry, will move to DB in Phase 3 with the same schema).
 - [x] Per-PR drill-down with merge readiness signal. (PR #7.)
-- [x] Authentication wall (placeholder auth — Phase 4 replaces with SSO). — landed in this plan-refresh PR (HTTP Basic Auth via env).
-- [ ] BugBot/Copilot/Claude review-state attribution on PR rows. — Next session.
+- [x] Authentication wall (placeholder auth — Phase 4 replaces with SSO). — PR #8 (HTTP Basic Auth via env).
+- [x] BugBot/Copilot/Claude review-state attribution on PR rows. — landed in the Phase 1 wrap-up PR (per-source classifier + bot strip on PR rows).
 
 ### Exit criteria
 - Owner can see live PRs and check states across all four products without leaving FHE-EPMC.

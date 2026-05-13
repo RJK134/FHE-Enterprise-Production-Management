@@ -3,10 +3,12 @@ import Link from "next/link";
 import { findPortfolioRepo } from "@/lib/services/portfolio/registry";
 import { listOpenPullRequests } from "@/lib/services/github/pulls";
 import { computeReadiness } from "@/lib/services/readiness/score";
+import { countActiveBlockers } from "@/lib/services/blockers/registry";
 import { isGithubConfigured } from "@/lib/env";
 import { ConnectionBanner } from "@/components/connection-banner";
 import { PrRow } from "@/components/pr-row";
 import { ReadinessBadge } from "@/components/readiness-badge";
+import { BlockerSummaryBadge } from "@/components/blocker-summary-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,8 @@ export default async function RepoDrillDownPage({ params }: PageProps): Promise<
     computeReadiness(repo),
   ]);
 
+  const slugPath = encodeURIComponent(repo.slug);
+
   return (
     <section aria-labelledby="repo-heading" className="space-y-6">
       <ConnectionBanner connected={connected} />
@@ -57,7 +61,16 @@ export default async function RepoDrillDownPage({ params }: PageProps): Promise<
           <p className="text-xs text-ink-400 font-mono">{repo.slug}</p>
           <p className="mt-2 text-sm text-ink-700 max-w-3xl">{repo.description}</p>
         </div>
-        <ReadinessBadge snapshot={readiness} />
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <ReadinessBadge snapshot={readiness} />
+          <Link
+            href={{ pathname: "/repos/[slug]/blockers", query: { slug: repo.slug } }}
+            as={`/repos/${slugPath}/blockers`}
+            aria-label={`Open blocker tracker for ${repo.displayName}`}
+          >
+            <BlockerSummaryBadge counts={countActiveBlockers(repo.slug)} />
+          </Link>
+        </div>
       </header>
 
       <section aria-labelledby="readiness-heading" className="rounded-xl border border-ink-200 bg-white p-5">

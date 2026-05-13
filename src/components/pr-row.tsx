@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { PullRequestSummary } from "@/lib/schemas/pr";
+import { BotStatesStrip } from "@/components/bot-states-strip";
 
 type Props = {
   readonly pr: PullRequestSummary;
@@ -70,6 +71,7 @@ export function PrRow({ pr, slug }: Props): JSX.Element {
             github
           </a>
         </p>
+        <BotStatesStrip bots={pr.bots} />
       </div>
       <div className="shrink-0">{checkBadge(pr.checks)}</div>
     </li>

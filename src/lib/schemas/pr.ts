@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CheckSource, CheckState } from "@/lib/services/github/check-classification";
 
 export const PrCheckConclusion = z.enum([
   "success",
@@ -22,6 +23,13 @@ export const PrCheckSummary = z.object({
 });
 export type PrCheckSummary = z.infer<typeof PrCheckSummary>;
 
+/**
+ * Per-source review state. Sources without any check-run are omitted entirely
+ * so the UI can render them as "absent" rather than "neutral".
+ */
+export const PrBotStates = z.record(CheckSource, CheckState);
+export type PrBotStates = z.infer<typeof PrBotStates>;
+
 export const PullRequestSummary = z.object({
   number: z.number().int().positive(),
   title: z.string().min(1),
@@ -33,5 +41,6 @@ export const PullRequestSummary = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   checks: PrCheckSummary,
+  bots: PrBotStates.default({}),
 });
 export type PullRequestSummary = z.infer<typeof PullRequestSummary>;
