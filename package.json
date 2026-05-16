@@ -18,7 +18,7 @@
     "verify:foundation": "bash scripts/verify-foundation.sh"
   },
   "dependencies": {
-    "@octokit/rest": "21.1.1",
+    "@octokit/rest": "22.0.1",
     "next": "15.5.15",
     "react": "18.3.1",
     "react-dom": "18.3.1",
