@@ -7,9 +7,9 @@
 
 ## Active Context
 
-**Last Updated**: 2026-05-10
-**Current Phase**: Phase 1 — Live Control Tower MVP — **all line items delivered**; Phase 2 kick-off pending.
-**Sprint Focus**: Wrapping Phase 1 (blocker tracker + review-state attribution) before starting Phase 2 P0 (Plan Refresh Engine, Claude Code Bridge).
+**Last Updated**: 2026-05-13
+**Current Phase**: Phase 2 — Agent Bridge & Plan Engine (active). Phase 1 complete.
+**Sprint Focus**: Phase 2 P0 — Plan Refresh Engine (this PR), Claude Code Bridge (next session), prompts library expansion (next session). Repairing build after major Dependabot bumps (TS 6, Zod 4, Octokit 22, @types/node 25).
 **Owner**: Freddie Finn (RJK134 / Future Horizons Education)
 **Primary Contact Repo**: https://github.com/RJK134/FHE-Enterprise-Production-Management
 
@@ -81,6 +81,37 @@ The SJMS-2.5 Cursor Agent pattern is the proven foundation for all repos:
   6. Phase 1 kickoff: scaffold the Next.js 14 dashboard with the typed GitHub service layer per `docs/ARCHITECTURE.md`.
   7. Run `scripts/setup-repo-standards.sh --repo RJK134/SJMS-2.5` (and EquiSmile, herm-platform) once owner approves.
   8. Resolve FutureHorizonsEducation org access for full portfolio coverage.
+
+### 2026-05-13 — Phase 2 P0 first cut — Plan Refresh Engine + dep-bump repair
+- **Objective**: Open Phase 2 with the Plan Refresh Engine (snapshot + diff + markdown report on a `/plan` route). Also repair the build after the owner merged TS 6 / Zod 4 / Octokit 22 / @types/node 25.
+- **Branch**: `claude/fhe-epmc-phase-2-plan-refresh`.
+- **Dep-bump repair (forced — main was broken)**:
+  - `tsconfig.json` — added `"ignoreDeprecations": "6.0"` (TS 6 deprecates `baseUrl`); included `src/**/*.d.ts` in the include list.
+  - `src/types/global.d.ts` — `declare module "*.css"` etc., so `import "./globals.css"` typechecks under TS 6.
+  - `src/lib/schemas/pr.ts` — `z.record(EnumKey, V)` requires every enum key under Zod 4; switched to `z.partialRecord(EnumKey, V)` so `bots` stays sparse.
+  - `src/lib/services/github/check-classification.ts` — same `partialRecord` fix on `ReviewStateBySource`.
+- **Plan Refresh Engine — files added**:
+  - `src/lib/schemas/plan.ts` — `PhaseId`, `PhaseStatus`, `PhaseItem`, `PhaseSnapshot`, `PortfolioSnapshot`, `PlanSnapshot` (8-phase array enforced).
+  - `src/lib/services/plan/snapshot.ts` — curated phase item map for all 8 phases; `buildPlanSnapshot()` composes blocker counts + portfolio readiness; status derivation rule (all P0 done + no open items → complete; all P0 done + some open → active; any item done → active; else → pending).
+  - `src/lib/services/plan/diff.ts` — `renderPlanReport(snapshot)` deterministic markdown, `diffPlan(prev, next)` produces phase-status changes + item done-flips + readiness/blocker deltas.
+  - `src/app/plan/page.tsx` — server-rendered Plan page with overview cards, per-phase rows, and the paste-ready markdown report.
+  - `src/components/phase-row.tsx` — phase summary card.
+- **Files updated**:
+  - `src/app/layout.tsx` — Plan link in primary nav.
+  - `docs/DELIVERY_PLAN.md` — Phasing Summary: Phase 1 → Complete, Phase 2 → Active. Phase 2 P0 plan-refresh ticked with auto-PR-emission deferred to P1.
+- **Tests (3 new suites)**:
+  - `src/lib/schemas/__tests__/plan.test.ts` — schema acceptance/rejection.
+  - `src/lib/services/plan/__tests__/snapshot.test.ts` — phase status derivation; no-token snapshot composition; blocker counts per slug.
+  - `src/lib/services/plan/__tests__/diff.test.ts` — deterministic render; identical-snapshot empty diff; phase-status flip; item done flip; readiness/blocker deltas.
+- **Total tests**: 132/132 passing across 16 suites (+21 from PR #20's 111).
+- **Build**: 6 routes (`/`, `/_not-found`, `/plan`, `/repos/[slug]`, `/repos/[slug]/blockers`, `/repos/[slug]/pulls/[number]`); middleware 34.6 kB; 102 kB shared chunks.
+- **Local verification**: lint ✓ · typecheck ✓ · test 132/132 ✓ · build ✓ · `bash scripts/verify-foundation.sh` ✓.
+- **Governance**: No new dependencies. No CI workflow file changes. No schema migrations / auth-business-logic / payments / external integrations / secret-handling. `requires-human-review` per CLAUDE.md (>5 files).
+- **Next Steps**:
+  1. Owner: review and merge this PR.
+  2. Phase 2 P0 follow-ups: Claude Code Bridge (handoff-pack generator + MEMORY.md drift detector); prompts library expansion.
+  3. Phase 2 P1: auto-PR emission for plan refreshes (uses the existing snapshot + diff + report; needs a write-scoped GitHub token + commit + branch).
+  4. EPMC-B5 (GitHub Environments) and EPMC-B7 (portfolio onboarding) remain owner-driven.
 
 ### 2026-05-10 — Phase 1 wrap-up — blocker tracker + review-state attribution
 - **Objective**: Finish the two remaining Phase 1 items (per-repo blocker tracker, BugBot/Copilot/Claude review-state attribution) so Phase 2 can start cleanly.
