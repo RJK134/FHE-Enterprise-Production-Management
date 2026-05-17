@@ -60,7 +60,7 @@ export function classifyCheckRun(name: string | null | undefined): CheckSource {
 export const CheckState = z.enum(["success", "failure", "pending", "neutral"]);
 export type CheckState = z.infer<typeof CheckState>;
 
-export const ReviewStateBySource = z.record(CheckSource, CheckState).default({});
+export const ReviewStateBySource = z.partialRecord(CheckSource, CheckState).default({});
 export type ReviewStateBySource = z.infer<typeof ReviewStateBySource>;
 
 type RunLike = {

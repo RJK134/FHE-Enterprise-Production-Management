@@ -26,8 +26,12 @@ export type PrCheckSummary = z.infer<typeof PrCheckSummary>;
 /**
  * Per-source review state. Sources without any check-run are omitted entirely
  * so the UI can render them as "absent" rather than "neutral".
+ *
+ * Zod 4: `z.record(EnumKey, V)` requires every key from the enum to be
+ * present in the input. We want the opposite — sparse keys — so use
+ * `z.partialRecord` here.
  */
-export const PrBotStates = z.record(CheckSource, CheckState);
+export const PrBotStates = z.partialRecord(CheckSource, CheckState);
 export type PrBotStates = z.infer<typeof PrBotStates>;
 
 export const PullRequestSummary = z.object({

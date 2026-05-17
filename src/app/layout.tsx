@@ -34,6 +34,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                       Portfolio
                     </a>
                   </li>
+                  <li>
+                    <a className="hover:text-ink-900" href="/plan" aria-label="Delivery plan snapshot">
+                      Plan
+                    </a>
+                  </li>
                 </ol>
               </nav>
             </div>

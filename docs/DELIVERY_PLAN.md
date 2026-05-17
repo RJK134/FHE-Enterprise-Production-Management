@@ -14,8 +14,8 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 | Phase | Name | Outcome | Status |
 |-------|------|---------|--------|
 | 0 | Foundation | Repo hardened, governance docs canonical, agents wired, CI green | **Complete** |
-| 1 | Live Control Tower MVP | Real GitHub PR/CI polling, dashboard skeleton, portfolio registry live | **Active** |
-| 2 | Agent Bridge & Plan Engine | Claude Code Bridge, plan refresh engine, prompt library | Pending |
+| 1 | Live Control Tower MVP | Real GitHub PR/CI polling, dashboard skeleton, portfolio registry live | Complete |
+| 2 | Agent Bridge & Plan Engine | Claude Code Bridge, plan refresh engine, prompt library | **Active** |
 | 3 | Evidence Lake & Governance Ledger | Evidence ingest, immutable ledger, audit log MVP | Pending |
 | 4 | RBAC, SSO, UAT Portal | Identity, role-based access, stakeholder UAT portal | Pending |
 | 5 | Release Governance & Cost Meter | Environments, release notes pipeline, agent cost tracking | Pending |
@@ -85,16 +85,17 @@ This is the canonical phased delivery roadmap for the FHE Enterprise Production 
 
 ---
 
-## Phase 2 — Agent Bridge & Plan Engine (Pending)
+## Phase 2 — Agent Bridge & Plan Engine (Active)
 
 **Objective:** Make Claude Code sessions and plan refreshes first-class flows.
 
 ### P0
 - [ ] Claude Code Bridge: handoff pack generator, MEMORY.md drift detector.
-- [ ] Plan refresh engine: read scan + UAT + ledger; emit `DELIVERY_PLAN.md` diff PR.
+- [x] Plan refresh engine: snapshot + diff + markdown report (this PR). — auto-PR emission deferred to P1.
 - [ ] Prompts library expanded with reusable scoped prompts per blocker class.
 
 ### P1
+- [ ] Plan refresh engine: emit an automatic `DELIVERY_PLAN.md` diff PR.
 - [ ] Repo Deep-Review Engine: orchestrate Claude multi-file architecture review with structured output.
 - [ ] Per-session evidence capture from Claude transcripts.
 
